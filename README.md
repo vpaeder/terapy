@@ -9,3 +9,15 @@ TeraPy is based on a modular architecture, which makes it easily extensible. Sev
 - modular file input/output filters
 
 TeraPy is developed at the Photonics Institute of Vienna University of Technology (http://www.photonik.tuwien.ac.at) by Vincent Paeder and Daniel Dietze. TeraPy was originally developed for our activities in terahertz time-domain spectroscopy (hence the name), but can be used in a much wider range of sequential measurement processes.
+
+______________________________________________
+
+Installation instructions:
+Open a command line and type:
+
+  git clone https://github.com/vpaeder/terapy.git
+
+Change dir to the new directory and type:
+
+  python setup.py install
+
