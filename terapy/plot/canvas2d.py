@@ -26,8 +26,12 @@ from terapy.plot.base import PlotCanvas
 from wx.lib.pubsub import Publisher as pub
 from matplotlib.colors import LinearSegmentedColormap
 from terapy.plot.plot2d import Plot2D
+from terapy.core.axedit import AxisInfos
+import wxmpl
+import wx
+import matplotlib
 
-class PlotCanvas2D(PlotCanvas):
+class PlotCanvas2D(PlotCanvas,wxmpl.PlotPanel):
     """
     
         Canvas class for 2D plots
@@ -42,7 +46,7 @@ class PlotCanvas2D(PlotCanvas):
     is_data = True
     name = "2D Plot"
     dim = 2
-    def __init__(self, parent=None, id=-1, xlabel="Delay (ps)", ylabel="Distance (um)", xscale="linear", yscale="linear"):
+    def __init__(self, parent=None, id=-1, xlabel=AxisInfos("Delay","ps"), ylabel=AxisInfos("Distance","um"), xscale="linear", yscale="linear"):
         """
         
             Initialization.
@@ -50,13 +54,25 @@ class PlotCanvas2D(PlotCanvas):
             Parameters:
                 parent    -    parent window (wx.Window)
                 id        -    id (int)
-                xlabel    -    label of abscissa axis (str)
-                ylabel    -    label of ordinate axis (str)
+                xlabel    -    label and units of abscissa axis ([str,quantities])
+                ylabel    -    label and units of ordinate axis ([str,quantities])
                 xscale    -    abscissa scale type (linear or log)
                 yscale    -    ordinate scale type (linear or log)
         
         """
-        PlotCanvas.__init__(self,parent,id, xlabel, ylabel, xscale, yscale)
+        PlotCanvas.__init__(self,parent,id)
+        wxmpl.PlotPanel.__init__(self,parent,id)
+        
+        fig = self.get_figure()
+        self.axes = fig.gca()
+        self.axes.grid(True)
+        self.axes.set_autoscale_on(True)
+        self.axes.set_xscale(xscale)
+        self.axes.set_yscale(yscale)
+        
+        self.labels = [xlabel, ylabel]
+        self.SetLabels()
+        
         self.dim = 2
         self.set_zoom(False)
         self.set_location(False)
@@ -75,8 +91,47 @@ class PlotCanvas2D(PlotCanvas):
                 'green': ((0.0, 0.0, 0.0),(1.0, 1.0, 0.0)),
                 'blue': ((0.0, 0.0, 1.0),(1.0, 1.0, 0.0))}
         self._2d_cmap_neg = LinearSegmentedColormap('my_colormap_neg',cdict,256)
+
         # send color change event to notify history from change
         pub.sendMessage("plot.color_change")
+
+        self.Bind(wx.EVT_LEFT_DCLICK, self.OnLeftClick, self)
+        self.Bind(wx.EVT_LEFT_DOWN, self.OnLeftClick, self)
+    
+    def OnLeftClick(self, event):
+        """
+        
+            Actions triggered on left mouse button click.
+            
+            Parameters:
+                event    -    wx.Event
+        
+        """
+        # MPL plot canvas intercept double clicks
+        # Use another strategy:
+        #    - on 1st click, set a timer
+        #    - if timer triggers before 2nd click, resets
+        #    - if click happens before, consider as double click
+        if hasattr(self,'timer'):
+            self.timer.Stop()
+            del(self.timer)
+            dbl = True
+        else:
+            self.timer = wx.Timer()
+            self.timer.Bind(wx.EVT_TIMER, self.OnLeftClick, self.timer)
+            self.timer.Start(500)
+            dbl = False
+            event.Skip()
+        
+        if not(isinstance(event,wx.TimerEvent)):
+            if dbl or event.ButtonDClick():
+                x, y = self._get_canvas_xy(event)
+                evt = matplotlib.backend_bases.MouseEvent(1, self, x, y)
+                for ax in self.get_figure().get_axes(): 
+                    xlabel = ax.xaxis.get_label()
+                    ylabel = ax.yaxis.get_label()
+                    if xlabel.contains(evt)[0] or ylabel.contains(evt)[0]:
+                        self.EditAxes()
 
     def AddPlot(self,array=None):
         """
@@ -94,6 +149,15 @@ class PlotCanvas2D(PlotCanvas):
         self.Update()
         return plt
     
+    def SetLabels(self):
+        """
+        
+            Set axes labels.
+        
+        """
+        self.axes.set_xlabel(self.labels[0].label())
+        self.axes.set_ylabel(self.labels[1].label())
+    
     def Update(self, event=None):
         """
         
@@ -109,12 +173,14 @@ class PlotCanvas2D(PlotCanvas):
             fig = self.get_figure()
             self.axes = fig.gca()
             # plot data
-            self.plt = self.axes.imshow(self.plots[0].array.data, origin='lower', cmap=self._2d_cmap, interpolation='nearest')
+            extent = [min(self.plots[0].array.coords[0]), max(self.plots[0].array.coords[0]), min(self.plots[0].array.coords[1]), max(self.plots[0].array.coords[1])]
+            plt = self.axes.imshow(self.plots[0].array.data, origin='lower', cmap=self._2d_cmap, interpolation='nearest', extent = extent, aspect="auto")
             # autoscale and generate colorbar
             self.axes.set_aspect('auto')
             self.axes.set_autoscale_on(True)
             self.axes.autoscale_view(True,False,False)
-            fig.colorbar(self.plt,format="%0.1e")
+            fig.colorbar(plt,format="%0.1e")
+            self.SetLabels()
             # redraw
             self.draw()
     
@@ -133,6 +199,18 @@ class PlotCanvas2D(PlotCanvas):
                 plt.Delete()
             if len(self.plots)==0:
                 pub.sendMessage("plot.empty_page", data=self)
+    
+    def PopupMenuItems(self,menu):
+        """
+        
+            Add popup menu items for canvas to given menu.
+            
+            Parameters:
+                menu    -    wx.Menu
+        
+        """
+        mitem = menu.Append(wx.NewId(),"&Edit axes")
+        menu.Bind(wx.EVT_MENU, self.EditAxes, id=mitem.Id)
     
     def SetName(self, name="Plot"):
         """

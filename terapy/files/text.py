@@ -161,16 +161,16 @@ class Text(FileFilter):
 		fname[-1] = "txt"
 		f = open(".".join(fname), 'w')
 		f.write("Information for scan from %s\n\n" % (strftime("%d.%m.%Y, %H:%M:%S", localtime())))
-		f.write("Input device:\n\t%s\n" % (arr.input.name))
+		f.write("Input device:\n\t%s\n" % (arr.input))
 		if len(arr.shape)==1:
 			try:
-				f.write("Axis device:\n\t%s\n" % (arr.axes[0].name))
+				f.write("Axis device:\n\t%s\n" % (arr.axes[0]))
 			except:
 				f.write("Axis device:\n\t%s\n" % (""))
 		elif len(arr.shape)==2:
 			try:
-				f.write("Axis X device:\n\t%s\n" % (arr.axes[0].name))
-				f.write("Axis Y device:\n\t%s\n" % (arr.axes[1].name))
+				f.write("Axis X device:\n\t%s\n" % (arr.axes[0]))
+				f.write("Axis Y device:\n\t%s\n" % (arr.axes[1]))
 			except:
 				f.write("Axis X device:\n\t%s\n" % (""))
 				f.write("Axis Y device:\n\t%s\n" % (""))

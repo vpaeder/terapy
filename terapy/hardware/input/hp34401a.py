@@ -25,7 +25,6 @@
 from terapy.hardware.input.base import InputDevice
 import wx
 from time import sleep
-import quantities as pq
 
 # HP Multimeter
 class HP34401A(InputDevice):
@@ -38,7 +37,7 @@ class HP34401A(InputDevice):
         InputDevice.__init__(self)
         self.timeout = 2
         self.instr = None        
-        self.units = [pq.V]
+        self.units = ["V"]
         self.qtynames = [""]
         self.holdoff = 0.0
         self.config = ['holdoff']

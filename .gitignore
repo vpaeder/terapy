@@ -1,0 +1,25 @@
+# OS generated files #
+######################
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# sphinx doc         #
+######################
+sphinx
+
+# Other stuff        #
+######################
+pngconv.sh
+backup
+data
+build
+dist
+terapy.egg-info
+*.pyc
+*.dll
+*.pyd

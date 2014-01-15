@@ -24,7 +24,6 @@
 
 from terapy.hardware.axes.base import AxisDevice
 from time import sleep
-import quantities as pq
 
 class AGUC8(AxisDevice):
 	"""
@@ -36,7 +35,7 @@ class AGUC8(AxisDevice):
 		AxisDevice.__init__(self)
 		self.timeout = 1.0
 		self.qtynames = "Position"
-		self.units = pq.um
+		self.units = "um"
 		self.instr = None
 		self.umperunit = 0.05
 		self.stepsize = 50

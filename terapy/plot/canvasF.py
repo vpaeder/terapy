@@ -27,7 +27,8 @@ import wx
 import functools
 from wx.lib.pubsub import Publisher as pub
 from terapy.filters import FilterBank
-        
+from terapy.core.axedit import AxisInfos
+
 class PlotCanvasF(PlotCanvas1D):
     """
     
@@ -42,15 +43,15 @@ class PlotCanvasF(PlotCanvas1D):
     """
     is_filter = True
     name = "Post-processed data"
-    def __init__(self, parent=None, id=-1, xlabel="Frequency (THz)", ylabel="Spectrum (V/Hz)", xscale="linear", yscale="log"):
+    def __init__(self, parent=None, id=-1, xlabel=AxisInfos("Frequency",'THz'), ylabel=AxisInfos("Spectrum","V/Hz"), xscale="linear", yscale="log"):
         """
         
             Initialization.
             Parameters:
                 parent    -    parent window (wx.Window)
                 id        -    id (int)
-                xlabel    -    label of abscissa axis (str)
-                ylabel    -    label of ordinate axis (str)
+                xlabel    -    label and units of abscissa axis ([str,quantities])
+                ylabel    -    label and units of ordinate axis ([str,quantities])
                 xscale    -    abscissa scale type (linear or log)
                 yscale    -    ordinate scale type (linear or log)
         
@@ -58,7 +59,8 @@ class PlotCanvasF(PlotCanvas1D):
         PlotCanvas1D.__init__(self,parent,id, xlabel, ylabel, xscale, yscale)
         self.bank = FilterBank()
         pub.subscribe(self.PostProcess, "filter.change")
-        
+        self.Bind(wx.EVT_WINDOW_DESTROY,self.OnDelete)
+    
     def OnDelete(self, event=None):
         """
         
@@ -68,8 +70,8 @@ class PlotCanvasF(PlotCanvas1D):
                 event    -    wx.Event
         
         """
-        PlotCanvas1D.OnDelete(self, event)
         pub.unsubscribe(self.PostProcess, "filter.change")
+        event.Skip()
 
     def OnRightClick(self, event):
         """
@@ -100,6 +102,11 @@ class PlotCanvasF(PlotCanvas1D):
         
         """
         PlotCanvas1D.PopupMenuItems(self, menu)
+        
+        # Edit axes
+        mitem = menu.Append(wx.NewId(),"&Edit axes")
+        menu.Bind(wx.EVT_MENU, self.EditAxes, id=mitem.Id)
+        
         # post-processing banks
         menuAdd = wx.Menu()
         from terapy.filters import GetFilterFiles
@@ -110,7 +117,7 @@ class PlotCanvasF(PlotCanvas1D):
             mitem = menuAdd.Append(wx.NewId(),x[1])
             self.parent.Bind(wx.EVT_MENU, functools.partial(self.AddFilterCanvas,x[0]), id=mitem.Id)
         menu.AppendSubMenu(menuAdd,"&Add post-processing canvas")
-
+        
     def SetFilterBank(self, bank):
         """
         
@@ -121,6 +128,8 @@ class PlotCanvasF(PlotCanvas1D):
         
         """
         self.bank = bank
+        self.Update()
+        
         if self.parent.CurrentPage == self:
             pub.sendMessage("plot.set_filters", self.bank)
             pub.sendMessage("plot.switch_canvas")

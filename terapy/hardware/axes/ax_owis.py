@@ -25,7 +25,6 @@
 from terapy.hardware.axes.base import AxisDevice
 from wx import GetTextFromUser
 from time import sleep
-import quantities as pq
 
 try:
 	import owis
@@ -46,7 +45,7 @@ if _support_OWIS == True:
 			self.timeout = 2
 			self.instr = None
 			self.qtynames = "Position"
-			self.units = pq.ps
+			self.units = "ps"
 			self.psperunit = 1.0
 			self.config = ["psperunit"]
 			self.last_position = 0

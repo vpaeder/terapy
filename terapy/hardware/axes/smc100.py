@@ -25,7 +25,6 @@
 from terapy.hardware.axes.base import AxisDevice
 from wx import GetTextFromUser
 from time import sleep
-import quantities as pq
 
 class SMC100(AxisDevice):
 	"""
@@ -37,7 +36,7 @@ class SMC100(AxisDevice):
 		AxisDevice.__init__(self)
 		self.timeout = 2
 		self.qtynames = "Position"
-		self.units = pq.ps
+		self.units = "ps"
 		self.instr = None
 		self.psperunit = 6.6713
 		self.config = ["psperunit"]

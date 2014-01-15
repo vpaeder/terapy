@@ -26,8 +26,12 @@ from terapy.plot.base import PlotCanvas
 from terapy.plot.plot1d import Plot1D
 from wx.lib.pubsub import Publisher as pub
 from terapy.filters import FilterBank
+from terapy.core.axedit import AxisInfos, ConvertUnits, FormatUnits
+import wxmpl
+import matplotlib
+import wx
 
-class PlotCanvas1D(PlotCanvas):
+class PlotCanvas1D(PlotCanvas,wxmpl.PlotPanel):
     """
     
         Canvas class for 1D plots
@@ -41,7 +45,7 @@ class PlotCanvas1D(PlotCanvas):
     """
     name = "1D Plot"
     dim = 1
-    def __init__(self, parent=None, id=-1, xlabel="Delay (ps)", ylabel="Signal (V)", xscale="linear", yscale="linear"):
+    def __init__(self, parent=None, id=-1, xlabel=AxisInfos("Delay","ps"), ylabel=AxisInfos("Signal","V"), xscale="linear", yscale="linear"):
         """
         
             Initialization.
@@ -49,15 +53,101 @@ class PlotCanvas1D(PlotCanvas):
             Parameters:
                 parent    -    parent window (wx.Window)
                 id        -    id (int)
-                xlabel    -    label of abscissa axis (str)
-                ylabel    -    label of ordinate axis (str)
+                xlabel    -    label and units of abscissa axis ([str,quantities])
+                ylabel    -    label and units of ordinate axis ([str,quantities])
                 xscale    -    abscissa scale type (linear or log)
                 yscale    -    ordinate scale type (linear or log)
         
         """
-        PlotCanvas.__init__(self,parent,id, xlabel, ylabel, xscale, yscale)
-        self.fcanvas = []
+        PlotCanvas.__init__(self,parent,id)
+        wxmpl.PlotPanel.__init__(self,parent,id)
         
+        fig = self.get_figure()
+        self.axes = fig.gca()
+        self.axes.grid(True)
+        self.axes.set_autoscale_on(True)
+        self.axes.set_xscale(xscale)
+        self.axes.set_yscale(yscale)
+        
+        self.labels = [xlabel, ylabel]
+        self.SetLabels()
+        
+        self.Bind(wx.EVT_LEFT_DCLICK, self.OnLeftClick, self)
+        self.Bind(wx.EVT_LEFT_DOWN, self.OnLeftClick, self)
+        self.Bind(wx.EVT_RIGHT_DOWN, self.OnRightClick, self)
+    
+    def OnLeftClick(self, event):
+        """
+        
+            Actions triggered on left mouse button click.
+            
+            Parameters:
+                event    -    wx.Event
+        
+        """
+        # MPL plot canvas intercept double clicks
+        # Use another strategy:
+        #    - on 1st click, set a timer
+        #    - if timer triggers before 2nd click, resets
+        #    - if click happens before, consider as double click
+        if hasattr(self,'timer'):
+            self.timer.Stop()
+            del(self.timer)
+            dbl = True
+        else:
+            self.timer = wx.Timer()
+            self.timer.Bind(wx.EVT_TIMER, self.OnLeftClick, self.timer)
+            self.timer.Start(500)
+            dbl = False
+            event.Skip()
+        
+        if not(isinstance(event,wx.TimerEvent)):
+            if dbl or event.ButtonDClick():
+                x, y = self._get_canvas_xy(event)
+                evt = matplotlib.backend_bases.MouseEvent(1, self, x, y)
+                for ax in self.get_figure().get_axes(): 
+                    xlabel = ax.xaxis.get_label()
+                    ylabel = ax.yaxis.get_label()
+                    if xlabel.contains(evt)[0] or ylabel.contains(evt)[0]:
+                        self.EditAxes()
+    
+    def OnRightClick(self, event):
+        """
+        
+            Actions triggered on right mouse button click.
+            
+            Parameters:
+                event    -    wx.Event
+        
+        """
+        event.Skip()
+        self.axes.set_autoscale_on(True)
+        self.Update()
+
+    def SetLabels(self):
+        """
+        
+            Set axes labels.
+        
+        """
+        self.axes.set_xlabel(self.labels[0].label())
+        self.axes.set_ylabel(self.labels[1].label())
+        for x in self.children:
+            # set children units as a function of parent units and filter bank effect
+            labels = [y.copy() for y in x.labels]
+            old_labels = [y.copy() for y in x.labels]
+            units = x.bank.GetUnits([y.units for y in self.labels])
+            for n in range(2): labels[n].units = units[n]
+            
+            ConvertUnits(x.labels, labels, ask_incompatible = False)
+            for y in x.plots:
+                array = y.GetData()
+                array.Rescale(new_labels=self.labels, defaults=old_labels)
+                y.SetData(array)
+            # update units
+            x.labels = labels
+            x.Update()
+    
     def Update(self, event=None):
         """
         
@@ -67,6 +157,9 @@ class PlotCanvas1D(PlotCanvas):
                 event    -    wx.Event
         
         """
+        # update labels
+        self.SetLabels()
+        # update axes ranges
         self.axes.relim()
         try:
             # this can fail with invalid data (e.g. negative values with log scale)
@@ -96,14 +189,17 @@ class PlotCanvas1D(PlotCanvas):
         
         """
         if self.is_filter:
+            # if canvas is post-processing canvas, need to apply filter bank
             plt = Plot1D(self,self.bank.ApplyFilters(array))
         elif self.is_data:
             plt = Plot1D(self,array)
         self.plots.append(plt)
         for x in self.children:
+            # if canvas has children, add plots to children too
             nplt = x.AddPlot(plt.GetData())
             nplt.source = plt
             plt.children.append(nplt)
+        
         self.SetPlotColors()
         self.Update()
         return plt
@@ -222,6 +318,10 @@ class PlotCanvas1D(PlotCanvas):
                         bank.parent = cnv.source.bank
                         bank.parent.children.append(bank)
                 cnv.SetFilterBank(bank)
+                # adjust canvas units from source canvas + filter bank effect
+                units = [FormatUnits(v) for v in bank.GetUnits([u.units for u in cnv.source.labels])]
+                for n in range(len(units)): cnv.labels[n].units = units[n]
+                cnv.Update()
                 break
     
     def RemoveFilterCanvases(self, event=None):

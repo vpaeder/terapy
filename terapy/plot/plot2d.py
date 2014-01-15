@@ -44,7 +44,7 @@ class Plot2D(Plot):
         """
         Plot.__init__(self, canvas, array)
         if len(array.shape)==2:
-            self.plot = array.data
+            self.SetData(array)
         else:
             self.plot = zeros((20,20))
     
@@ -59,7 +59,7 @@ class Plot2D(Plot):
         """
         self.array = array
         self.plot = array.data
-        
+    
     def GetData(self):
         """
         

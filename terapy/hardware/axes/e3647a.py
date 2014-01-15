@@ -24,7 +24,6 @@
 
 from terapy.hardware.axes.base import AxisDevice
 from time import sleep
-import quantities as pq
 
 class E3647A(AxisDevice):
     """
@@ -37,7 +36,7 @@ class E3647A(AxisDevice):
         AxisDevice.__init__(self)
         self.timeout = 1.0
         self.qtynames = "Voltage"
-        self.units = pq.V
+        self.units = "V"
         self.instr = None
         self.config = []
     

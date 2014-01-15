@@ -25,7 +25,6 @@
 from terapy.hardware.input.base import InputDevice
 import wx
 from time import sleep
-import quantities as pq
 
 # Ophir USBI Device        
 class OphirDevice(InputDevice):
@@ -45,7 +44,7 @@ class OphirDevice(InputDevice):
         self.MM_mode = 0
         self.MM_samples = 1
         self.frequency = 1000
-        self.units = [pq.V]
+        self.units = ["V"]
         self.qtynames = [""]
         try:
             from ophir import OphirUSBI

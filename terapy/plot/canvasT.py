@@ -27,6 +27,7 @@ import wx
 from wx.lib.pubsub import Publisher as pub
 import functools
 import wxmpl
+from terapy.core.axedit import AxisInfos
 
 class PlotCanvasT(PlotCanvas1D):
     """
@@ -42,7 +43,7 @@ class PlotCanvasT(PlotCanvas1D):
     """
     is_data = True
     name = "Time domain data"
-    def __init__(self, parent=None, id=-1, xlabel="Delay (ps)", ylabel="Signal (V)", xscale="linear", yscale="linear"):
+    def __init__(self, parent=None, id=-1, xlabel=AxisInfos("Delay","ps"), ylabel=AxisInfos("Signal","V"), xscale="linear", yscale="linear"):
         PlotCanvas1D.__init__(self,parent,id, xlabel, ylabel, xscale, yscale)
         self.Bind(wx.EVT_LEFT_DCLICK, self.OnLeftDblClick)
         
@@ -75,6 +76,11 @@ class PlotCanvasT(PlotCanvas1D):
         PlotCanvas1D.PopupMenuItems(self, menu)
         mitem = menu.Append(wx.NewId(),"&Clear canvas")
         menu.Bind(wx.EVT_MENU, self.ClearCanvas, id=mitem.Id)
+        
+        # Edit axes
+        mitem = menu.Append(wx.NewId(),"&Edit axes")
+        menu.Bind(wx.EVT_MENU, self.EditAxes, id=mitem.Id)
+        
         # post-processing banks
         menuAdd = wx.Menu()
         from terapy.filters import GetFilterFiles

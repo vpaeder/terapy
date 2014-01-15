@@ -34,6 +34,7 @@ from terapy.filters.base import Filter
 from terapy.core import check_py, filter_file
 from terapy.core.parsexml import ParseAttributes
 from terapy.core.dataman import DataArray
+from terapy.core.axedit import AxisInfos
 from wx.lib.pubsub import Publisher as pub
 from xml.dom import minidom
 import wx
@@ -373,6 +374,26 @@ class FilterBank():
                 ft.apply_filter(narray)
         
         return narray
+    
+    def GetUnits(self, units):
+        """
+        
+            Return how given physical units are modified by filter bank
+            
+            Parameters:
+                units    -    list of dim+1 units
+            
+            Output:
+                units of coordinates and data after processing (list of quantities) 
+        
+        """
+        # compute units after processing
+        for ft in self.filters:
+            if ft.is_active:
+                units = ft.get_units(units)
+        
+        return units
+        
 
 # import filter classes
 curdir = os.path.dirname(__file__)

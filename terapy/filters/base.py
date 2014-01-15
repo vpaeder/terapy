@@ -76,6 +76,20 @@ class Filter():
         """
         return True
     
+    def get_units(self, units):
+        """
+        
+            Compute units of array coordinates and data after processsing.
+            
+            Parameters:
+                units    -    list of units (list of quantities)
+            
+            Output:
+                list of units (list of quantities)
+        
+        """
+        return units
+    
     def get_icon(self):
         """
         

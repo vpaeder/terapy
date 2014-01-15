@@ -25,7 +25,6 @@
 from terapy.hardware.input.base import InputDevice
 import wx
 from time import sleep
-import quantities as pq
 
 # Stanford SR830 Lock In
 class SR830(InputDevice):
@@ -37,7 +36,7 @@ class SR830(InputDevice):
     def __init__(self):
         InputDevice.__init__(self)
         self.timeout = 2
-        self.units = [pq.V, pq.V, pq.V, pq.deg]
+        self.units = ["V", "V", "V", "deg"]
         self.qtynames = ["X","Y","R","phi"]
         self.instr = None
         self.holdoff = 0.0

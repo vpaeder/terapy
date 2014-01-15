@@ -25,6 +25,7 @@
 import wx
 from terapy.icons import DataIconList
 from terapy.plot import canvas_modules
+from terapy.core.dragdrop import HistoryDrop
 from wx.lib.pubsub import Publisher as pub
 from time import time
 import functools
@@ -65,6 +66,9 @@ class PlotNotebook(wx.Notebook):
         self.Bind(wx.EVT_LEFT_DCLICK, self.OnLeftDblClick, self)
         self.Bind(wx.EVT_LEFT_UP, self.OnLeftUp, self)
         self.Bind(wx.EVT_MOTION, self.OnDrag, self)
+        
+        self.SetDropTarget(HistoryDrop(self.OnEndDrag))
+        pub.subscribe(self.SetDragObject, "history.drag_object")
         pub.subscribe(self.RemoveCanvas, "plot.empty_page")
         pub.subscribe(self.Broadcast, "request_canvas")
         
@@ -511,4 +515,47 @@ class PlotNotebook(wx.Notebook):
             pub.sendMessage("plot.set_filters", data=None)
             pub.sendMessage("plot.enable_filters", data=False)
         pub.sendMessage("plot.switch_canvas")
+
+    def OnEndDrag(self, x, y, data):
+        """
+        
+            Actions consecutive to drop on plot notebook.
+            
+            Parameters:
+                x,y    -    coordinates of drop action (int)
+                data   -    dropped data (str)
+                            Passing drag and drop data in wxpython is incovenient.
+                            Alternative used here: data is stored as self.drag_object
+        
+        """
+        if self.drag_object!=None:
+            pg = self.GetCurrentPage()
+            # check that current page can receive dropped data
+            if len(self.drag_object.shape)==pg.dim:
+                # if the dimension is ok, the type of canvas must be checked
+                if pg.is_data:
+                    target = pg
+                elif pg.is_filter:
+                    target = pg
+                    while not(target.is_data):
+                        target = target.source
+                if self.drag_object.plot==None:
+                    # dropped data isn't plotted anywhere => add to target
+                    self.drag_object.plot = target.AddPlot(self.drag_object)
+                else:
+                    # already plotted => delete and replot
+                    self.drag_object.plot.Delete()
+                    self.drag_object.plot = target.AddPlot(self.drag_object)
+                target.SetPlotColors()
+    
+    def SetDragObject(self, inst):
+        """
+        
+            Set drag object from pubsub event (used in drag and drop actions).
+            
+            Parameters:
+                inst    -    pubsub event data
+        
+        """
+        self.drag_object = inst.data
         

@@ -28,7 +28,6 @@ import wx
 from terapy.hardware.device import Device
 from terapy.core import icon_path
 from terapy.core.validator import NumberValidator
-import quantities as pq
 
 # generic input device
 class InputDevice(Device):
@@ -41,7 +40,7 @@ class InputDevice(Device):
         self.address = None
         self.ID = None
         self.name = ""
-        self.units = [pq.V]
+        self.units = ["V"]
         self.qtynames = ["X"]
         self.amplitude = 1.0
         self.config = ['amplitude']
@@ -100,8 +99,7 @@ class InputDevice(Device):
                 list of tuples, each qty as (name, value, units)
         
         """
-        units = [x.symbol for x in self.units]
-        return zip(self.qtynames, self.read(), units)
+        return zip(self.qtynames, self.read(), self.units)
     
     def configure(self):
         """
@@ -157,7 +155,7 @@ class InputWidget(wx.ScrolledWindow):
         
         """
         wx.ScrolledWindow.__init__(self,parent,style=wx.HSCROLL|wx.VSCROLL|wx.TAB_TRAVERSAL)
-        self.units = [x.symbol for x in units]
+        self.units = units
         self.qtynames = qtynames
         self.title = title
         self.input = input

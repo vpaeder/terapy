@@ -26,7 +26,6 @@ from terapy.hardware.input.base import InputDevice, InputWidget, AntennaWidget
 from time import sleep
 import numpy as np
 import wx
-import quantities as pq
 
 try:
     import adwin
@@ -59,7 +58,7 @@ if _support_ADWIN == True:
             self.CH2_f = 3000.0
             self.CH2_A = 4.0
             self.flock = 0
-            self.units = [pq.V, pq.V, pq.V, pq.deg, pq.Hz]
+            self.units = ["V", "V", "V", "deg", "Hz"]
             self.qtynames = ["X","Y","R","Phi","f"]
             
             self.fdet = 0.0    # detected frequency in Hz

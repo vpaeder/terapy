@@ -33,6 +33,8 @@ root_path[-1] = ""
 root_path = os.path.normcase("/".join(root_path)) # directory where main file is
 icon_path = os.path.normcase(root_path + "icons/") # where icons are stored
 
+default_units = {'time':'ps','frequency':'THz','length':'um'} # dictionnary of default units
+
 # search for main config file (paths + extra stuff)
 inipath = []
 # first in user directory
@@ -66,6 +68,9 @@ for x in candidates:
                         module_path = y.attributes['value'].value
                     elif y.nodeName == 'refresh_delay':
                         refresh_delay = float(y.attributes['value'].value)
+                    elif y.nodeName == 'default_units':
+                        for z in y.attributes.keys():
+                            default_units[str(z)] = str(y.attributes[z].value)
     except:
         pass
  
@@ -164,9 +169,10 @@ def parse_modules(package, dirname, cls):
             for attr in mod.__dict__:
                 if not attr.startswith('_'):
                     pa = getattr(mod, attr)
-                    if type(pa)==type(cls):
-                        if issubclass(pa,cls) and pa!=cls and modnames.count(pa.__name__)==0:
+                    try:
+                        if issubclass(pa,cls) and pa!=cls and  modnames.count(pa.__name__)==0:
                             modules.append(pa)
                             modnames = [x.__name__ for x in modules]
-    
+                    except:
+                        pass
     return modules

@@ -104,11 +104,11 @@ class XLS(FileFilter):
 		isheet.write(0,0,"Time")
 		isheet.write(0,1,strftime("%d.%m.%Y, %H:%M:%S", localtime()))
 		isheet.write(1,0,"Input device")
-		isheet.write(1,1,arr.input.name)
+		isheet.write(1,1,"%s" % (arr.input))
 		if len(arr.shape)==1:
 			isheet.write(2,0,"Axis device")
 			try:
-				isheet.write(2,1,arr.axes[0].name)
+				isheet.write(2,1,"%s" % (arr.axes[0]))
 			except:
 				pass
 			n=4
@@ -116,8 +116,8 @@ class XLS(FileFilter):
 			isheet.write(2,0,"Axis X device")
 			isheet.write(3,0,"Axis Y device")
 			try:
-				isheet.write(2,1,arr.axes[0].name)
-				isheet.write(3,1,arr.axes[1].name)
+				isheet.write(2,1,"%s" % (arr.axes[0]))
+				isheet.write(3,1,"%s" % (arr.axes[1]))
 			except:
 				pass
 			n=5

@@ -28,7 +28,6 @@ from math import sqrt, tan
 import numpy as np
 from scipy.integrate import simps
 from scipy.fftpack import fft
-import quantities as pq
 
 # NI PXI interface
 try:
@@ -95,7 +94,7 @@ if _support_PXI:
             self.gatewidth = 1.0
             # device handle
             self.pxi = pyPXI5122()
-            self.units = [pq.V]
+            self.units = ["V"]
             self.qtynames = [""]
         
         def __del__(self):
@@ -401,7 +400,7 @@ if _support_PXI:
             self.config = {'signal':0, 'PHI':0.0, 'holdoff':0.0, 'ch0_impedance':1000000, 'ch0_filter':-1, 'ch0_range':20.0, 'ch0_offset':0.0, 'ch1_impedance':1000000, 'ch1_filter':-1, 'ch1_range':20.0, 'ch1_offset':0.0, 'inttime':300.0}
             self.fdet = 0.0    # detected frequency in Hz
             self.phi = 0.0  # last detected phase in rad
-            self.units = [pq.V, pq.V, pq.V, pq.deg, pq.Hz]
+            self.units = ["V", "V", "V", "deg", "Hz"]
             self.qtynames = ["X","Y","R","Phi","f"]
             
             # device handle

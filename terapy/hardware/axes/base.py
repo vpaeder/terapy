@@ -27,7 +27,6 @@ import wx
 from terapy.hardware.device import Device
 from terapy.core import icon_path
 from terapy.core.validator import NumberValidator
-import quantities as pq
 
 # generic axis device, motion controller - GPIB and COM
 class AxisDevice(Device):
@@ -40,7 +39,7 @@ class AxisDevice(Device):
         self.timerStart = 0 
         self.intervalTimerStart = 0
         self.qtynames = "Time"
-        self.units = pq.s
+        self.units = "s"
         self.interval = 0.01
         self.config = ["interval"]
     
@@ -158,7 +157,7 @@ class AxisDevice(Device):
                 list of tuples, each qty as (name, value, units)
         
         """
-        return [(self.qtynames, self.pos(), self.units.symbol)]
+        return [(self.qtynames, self.pos(), self.units)]
     
     def configure(self):
         """
@@ -215,7 +214,7 @@ class AxisWidget(wx.ScrolledWindow):
         
         """
         wx.ScrolledWindow.__init__(self,parent,style=wx.HSCROLL|wx.VSCROLL|wx.TAB_TRAVERSAL)
-        self.units = units.symbol
+        self.units = units
         self.title = title
         self.axis = axis
         self.min = min
@@ -290,7 +289,7 @@ class AxisWidget(wx.ScrolledWindow):
             pos = self.axis.pos()
         except:
             pos = 0
-        self.label_position.SetLabel(("%3.2f" % pos) + " " + self.units.symbol)
+        self.label_position.SetLabel(("%3.2f" % pos) + " " + self.units)
         
     def SetValue(self, val):
         """

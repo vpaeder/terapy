@@ -24,6 +24,7 @@
 
 from treectrl import SubTree
 import numpy as np
+from terapy.core.axedit import AxisInfos, ConvertUnits
 
 class Measurement():
     """
@@ -49,7 +50,7 @@ class Measurement():
         self.total = 0 # total number of steps
         self.current = 0 # current step
         self.xml = "" # store event tree
-
+    
     def BuildDataTree(self):
         """
         
@@ -63,7 +64,7 @@ class Measurement():
             self.data[n].input = self.inputs[n]
             self.data[n].axes = self.axes[n]
             self.total += np.prod(self.opcount[n])
-        
+    
     def GetShapes(self, events=None, shape = [], opcount = [], axes = []):
         """
         
@@ -103,7 +104,7 @@ class Measurement():
                     self.shape[self.count] = shape[:]
                     self.opcount[self.count] = opcount[:]
                     self.axes[self.count] = axes[:]
-                    self.inputs[self.count] = x.data.inlist[x.data.input]
+                    self.inputs[self.count] = AxisInfos(x.data.inlist[x.data.input].qtynames[x.data.index], x.data.inlist[x.data.input].units[x.data.index])
                     self.count+=1
                 if x.data.is_display or x.data.is_save:
                     x.data.m_id = self.count-1 # assume that the plot function is after an input => will plot 1st qty present before itself 
@@ -116,13 +117,13 @@ class Measurement():
                         cshape.append(x.data.N)
                         # if the loop acts on an axis, save axis reference
                         if hasattr(x.data,'axlist'):
-                            caxis.append(x.data.axlist[x.data.axis])
+                            caxis.append(AxisInfos(x.data.axlist[x.data.axis].qtynames,x.data.axlist[x.data.axis].units))
                         else:
                             caxis.append(None)
                     self.GetShapes(x,cshape,copcount,caxis)
                     # must store which data array indices are in this loop
                     x.data.m_ids = range(x.data.m_id,self.count)
-
+    
     def SetCurrentValue(self, narray, value, inc=False, dec=False):
         """
         
@@ -179,7 +180,7 @@ class Measurement():
             if narray<self.count:
                 arr = self.data[narray]
                 arr.coords[arr.scanDim][arr.idx[arr.scanDim]] = value
-        
+    
     def GetCoordinateValue(self, narrays):
         """
         
@@ -281,7 +282,7 @@ class Measurement():
             if narray<self.count:
                 arr = self.data[narray]
                 arr.idx[arr.scanDim] = pos
-        
+    
     def Increment(self, narrays):
         """
         
@@ -295,7 +296,7 @@ class Measurement():
             if narray<self.count:
                 arr = self.data[narray]
                 arr.Increment(arr.scanDim)
-
+    
     def Decrement(self, narrays):
         """
         
@@ -325,7 +326,7 @@ class Measurement():
                 arr = self.data[narray]
                 idx = arr.idx
                 arr.idx = idx*0
-    
+
 class DataArray():
     """
     
@@ -393,7 +394,7 @@ class DataArray():
                 self.idx[n-1] -= 1
         if self.idx[0] < 0:
             self.idx[0] = self.shape[0]-1
-
+    
     def SetPosition(self,dim,pos):
         """
         
@@ -422,7 +423,7 @@ class DataArray():
         """
         if dim<0 or dim>=len(self.idx): return # wrong dimension index
         return self.idx[dim]
-
+    
     def SetValue(self, value):
         """
         
@@ -446,7 +447,7 @@ class DataArray():
         """
         # get value of current index
         return self.data[tuple(self.idx)]
-
+    
     def SetCoordinateValue(self, value):
         """
         
@@ -457,7 +458,7 @@ class DataArray():
             
         """
         self.coords[self.scanDim][self.idx[self.scanDim]] = value
-        
+    
     def GetCoordinateValue(self):
         """
         
@@ -491,3 +492,44 @@ class DataArray():
         narray.axes = self.axes[:]
         
         return narray
+
+    def Rescale(self, new_labels, defaults = []):
+        """
+        
+            Rescale data according to given axes settings.
+            
+            Parameters:
+                new_labels    -    list of new labels+units (list of AxisInfos)
+                defaults      -    default values if none are currently set (list of AxisInfos)
+        
+        """
+        # build list to convert
+        old_labels = self.axes[:]
+        old_labels.append(self.input)
+        for n in range(len(old_labels)):
+            if old_labels[n]==None:
+                # label not defined
+                if len(defaults)>n:
+                    # take default if it exists
+                    old_labels[n] = defaults[n]
+                elif len(new_labels)>n:
+                    # otherwise, take new value if it exists 
+                    old_labels[n] = new_labels[n]
+        
+        # check that new labels are defined
+        for n in range(len(new_labels)):
+            if new_labels[n]==None:
+                # label not defined, set as old label
+                new_labels[n] = old_labels[n]
+        
+        factors = ConvertUnits(old_labels, new_labels, ask_incompatible = False)
+        for n in range(len(factors)):
+            if n<len(self.shape):
+                self.axes[n] = old_labels[n]
+            else:
+                self.input = old_labels[n]
+            if factors[n]!=1:
+                if n<len(self.shape):
+                    self.coords[n] *= factors[n]
+                else:
+                    self.data *= factors[n]

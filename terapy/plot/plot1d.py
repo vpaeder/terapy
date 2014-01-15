@@ -95,8 +95,11 @@ class Plot1D(Plot):
         """
         self.plot.remove()
         if self.source!=None:
-            idx = self.source.children.index(self)
-            self.source.children.pop(idx)
+            try:
+                idx = self.source.children.index(self)
+                self.source.children.pop(idx)
+            except:
+                pass
         else:
             self.array.plot = None
         if self.canvas.plots.count(self)>0:
