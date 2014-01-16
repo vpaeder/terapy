@@ -27,7 +27,7 @@ import wx
 from wx.lib.pubsub import Publisher as pub
 import functools
 import wxmpl
-from terapy.core.axedit import AxisInfos
+from terapy.core.axedit import AxisInfos, du
 
 class PlotCanvasT(PlotCanvas1D):
     """
@@ -43,7 +43,7 @@ class PlotCanvasT(PlotCanvas1D):
     """
     is_data = True
     name = "Time domain data"
-    def __init__(self, parent=None, id=-1, xlabel=AxisInfos("Delay","ps"), ylabel=AxisInfos("Signal","V"), xscale="linear", yscale="linear"):
+    def __init__(self, parent=None, id=-1, xlabel=AxisInfos("Delay",du["time"]), ylabel=AxisInfos("Signal",du["voltage"]), xscale="linear", yscale="linear"):
         PlotCanvas1D.__init__(self,parent,id, xlabel, ylabel, xscale, yscale)
         self.Bind(wx.EVT_LEFT_DCLICK, self.OnLeftDblClick)
         

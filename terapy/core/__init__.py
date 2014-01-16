@@ -33,7 +33,7 @@ root_path[-1] = ""
 root_path = os.path.normcase("/".join(root_path)) # directory where main file is
 icon_path = os.path.normcase(root_path + "icons/") # where icons are stored
 
-default_units = {'time':'ps','frequency':'THz','length':'um'} # dictionnary of default units
+default_units = {'time':'ps','frequency':'THz','length':'um','voltage':'V','current':'A'} # dictionnary of default units
 
 # search for main config file (paths + extra stuff)
 inipath = []

@@ -27,7 +27,7 @@ import wx
 import functools
 from wx.lib.pubsub import Publisher as pub
 from terapy.filters import FilterBank
-from terapy.core.axedit import AxisInfos
+from terapy.core.axedit import AxisInfos, du
 
 class PlotCanvasF(PlotCanvas1D):
     """
@@ -43,7 +43,7 @@ class PlotCanvasF(PlotCanvas1D):
     """
     is_filter = True
     name = "Post-processed data"
-    def __init__(self, parent=None, id=-1, xlabel=AxisInfos("Frequency",'THz'), ylabel=AxisInfos("Spectrum","V/Hz"), xscale="linear", yscale="log"):
+    def __init__(self, parent=None, id=-1, xlabel=AxisInfos("Frequency",du["frequency"]), ylabel=AxisInfos("Spectrum",du["voltage"]/du["frequency"]), xscale="linear", yscale="log"):
         """
         
             Initialization.

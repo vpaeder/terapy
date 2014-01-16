@@ -183,10 +183,14 @@ class TeraPyMainFrame(wx.Frame):
         
         """
         menuFile = wx.Menu()
-        mitem = menuFile.Append(wx.NewId(), "&Open scan...")
+        mitem = menuFile.Append(wx.NewId(), "&Open scan")
         self.Bind(wx.EVT_MENU, self.OnLoad, id=mitem.Id)
         menuFile.AppendSeparator()
-        mitem = menuFile.Append(wx.NewId(), "&About...")
+        mitem = menuFile.Append(wx.NewId(), "&Settings")
+        self.Bind(wx.EVT_MENU, self.OnSettings, id=mitem.Id)
+        mitem = menuFile.Append(wx.NewId(), "&Default units")
+        self.Bind(wx.EVT_MENU, self.OnDefaultUnits, id=mitem.Id)
+        mitem = menuFile.Append(wx.NewId(), "&About")
         self.Bind(wx.EVT_MENU, self.OnAbout, id=mitem.Id)
         menuFile.AppendSeparator()
         mitem = menuFile.Append(wx.NewId(), "E&xit")
@@ -426,10 +430,40 @@ class TeraPyMainFrame(wx.Frame):
                 event    -    event object (wx.Event)
         
         """
-        dlg = wx.MessageDialog(self, "TERA THz-TDS GUI (c) 2010-2013 D. Dietze, 2013 V. Paeder\nVersion: " + __version__,caption="About",style=wx.OK,pos=wx.DefaultPosition)
+        dlg = wx.MessageDialog(self, "TERA THz-TDS GUI (c) 2010-2013 D. Dietze, 2013-2014 V. Paeder\nVersion: " + __version__,caption="About",style=wx.OK,pos=wx.DefaultPosition)
         dlg.ShowModal()
         dlg.Destroy()
     
+    def OnSettings(self, event):
+        """
+        
+            Open settings dialog.
+            
+            Parameters:
+                event    -    event object (wx.Event)
+        
+        """
+        #dlg.ShowModal()
+        #dlg.Destroy()
+
+    def OnDefaultUnits(self, event):
+        """
+        
+            Open default units dialog.
+            
+            Parameters:
+                event    -    event object (wx.Event)
+        
+        """
+        from terapy.core.axedit import AxesPropertiesDialog, AxisInfos, du
+        labels = [AxisInfos(x[0],x[1]) for x in du.items()]
+        dlg = AxesPropertiesDialog(self, "Default units", axlist=labels, read_only = [True, False], format = False)
+        if dlg.ShowModal() == wx.ID_OK:
+            for x in dlg.GetValue():
+                du[x.name] = x.units
+            pub.sendMessage("default_units.changed")
+        dlg.Destroy()
+
     def OnResetHardware(self, event = None):
         """
         

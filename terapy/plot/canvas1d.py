@@ -26,7 +26,7 @@ from terapy.plot.base import PlotCanvas
 from terapy.plot.plot1d import Plot1D
 from wx.lib.pubsub import Publisher as pub
 from terapy.filters import FilterBank
-from terapy.core.axedit import AxisInfos, ConvertUnits, FormatUnits
+from terapy.core.axedit import AxisInfos, ConvertUnits, FormatUnits, du
 import wxmpl
 import matplotlib
 import wx
@@ -45,7 +45,7 @@ class PlotCanvas1D(PlotCanvas,wxmpl.PlotPanel):
     """
     name = "1D Plot"
     dim = 1
-    def __init__(self, parent=None, id=-1, xlabel=AxisInfos("Delay","ps"), ylabel=AxisInfos("Signal","V"), xscale="linear", yscale="linear"):
+    def __init__(self, parent=None, id=-1, xlabel=AxisInfos("Delay",du["time"]), ylabel=AxisInfos("Signal",du["voltage"]), xscale="linear", yscale="linear"):
         """
         
             Initialization.
@@ -69,6 +69,9 @@ class PlotCanvas1D(PlotCanvas,wxmpl.PlotPanel):
         self.axes.set_xscale(xscale)
         self.axes.set_yscale(yscale)
         
+        xlabel.units = FormatUnits(xlabel.units)
+        ylabel.units = FormatUnits(ylabel.units)
+        for x in [xlabel,ylabel]: x.units._magnitude = 1.0
         self.labels = [xlabel, ylabel]
         self.SetLabels()
         
@@ -190,9 +193,12 @@ class PlotCanvas1D(PlotCanvas,wxmpl.PlotPanel):
         """
         if self.is_filter:
             # if canvas is post-processing canvas, need to apply filter bank
-            plt = Plot1D(self,self.bank.ApplyFilters(array))
-        elif self.is_data:
-            plt = Plot1D(self,array)
+            array = self.bank.ApplyFilters(array)
+        # rescale array to plot units
+        array.Rescale(self.labels)
+        
+        # add plot
+        plt = Plot1D(self,array)
         self.plots.append(plt)
         for x in self.children:
             # if canvas has children, add plots to children too

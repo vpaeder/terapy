@@ -45,7 +45,7 @@ class AxesPropertiesDialog(wx.Dialog):
         Axes properties selection dialog
     
     """
-    def __init__(self, parent = None, title="Axes properties", axlist=[]):
+    def __init__(self, parent = None, title="Axes properties", axlist=[], read_only = [False,False], format = True):
         """
         
             Initialization.
@@ -71,6 +71,7 @@ class AxesPropertiesDialog(wx.Dialog):
         self.SetSizerAndFit(sizer)
         
         # construct list of physical units
+        self.format = format
         units = {}
         for x in urg._units:
             sym = urg._units[x].symbol
@@ -109,6 +110,8 @@ class AxesPropertiesDialog(wx.Dialog):
         self.editor = wx.grid.GridCellChoiceEditor(self.units.keys(),allowOthers=True)
         for n in range(len(axlist)):
             self.sheet.SetCellEditor(n,1,self.editor)
+            self.sheet.SetReadOnly(n,0,read_only[0])
+            self.sheet.SetReadOnly(n,1,read_only[1])
         
         self.Fit()
     
@@ -121,8 +124,9 @@ class AxesPropertiesDialog(wx.Dialog):
                 list of AxisInfos objects
         
         """
-        for x in self.table.data:
-            x.units = FormatUnits(x.units)
+        if self.format:
+            for x in self.table.data:
+                x.units = FormatUnits(x.units)
         return self.table.data
     
     def Destroy(self, event=None):
@@ -369,7 +373,7 @@ class AxisInfos():
 def FormatUnits(units):
     """
     
-        Apply some formatting rules to given units.
+        Format given units in default units.
         Parameters:
             units    -    pint units (pint.Quantity)
         Output:
@@ -378,17 +382,18 @@ def FormatUnits(units):
     """
     # convert units to default units
     for x in units.units.keys():
-        cur = units.units[x]
-        if urg[x].dimensionality=='[time]':
-            if cur == 1:
-                units = units/urg[x]*urg[x].to(du['time'])
-            elif cur == -1:
-                units = units*urg[x]*(1.0/urg[x]).to(du['frequency'])
-        elif urg[x].dimensionality=='1 / [time]':
-            if cur == -1:
-                units = units*urg[x]*(1.0/urg[x]).to(du['time'])
-            elif cur == 1:
-                units = units/urg[x]*urg[x].to(du['frequency'])
+        for y in du.values():
+            ux = urg[x].dimensionality.values()[0]
+            uy = y.dimensionality.values()[0]
+            cur = units.units[x]
+            
+            if urg[x].dimensionality.keys()[0]==y.dimensionality.keys()[0] and len(urg[x].dimensionality.keys())==len(y.dimensionality.keys())==1:
+                if cur == ux == uy or cur == -ux == -uy:
+                    units = units/urg[x]*urg[x].to(y)
+                elif cur == ux == -uy < 0 or cur == uy == -ux < 0:
+                    units = units*urg[x]*(1.0/urg[x]).to(y)
+    
+    # TODO: merge and simplify units
     return units
 
 def ConvertUnits(old, new, ask_incompatible=True):

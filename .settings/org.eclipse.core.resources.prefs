@@ -16,6 +16,7 @@ encoding//terapy/core/dragdrop.py=utf-8
 encoding//terapy/core/history.py=utf-8
 encoding//terapy/core/menus.py=utf-8
 encoding//terapy/core/parsexml.py=utf-8
+encoding//terapy/core/settings.py=utf-8
 encoding//terapy/core/splitter.py=utf-8
 encoding//terapy/core/threads.py=utf-8
 encoding//terapy/core/tooltip.py=utf-8

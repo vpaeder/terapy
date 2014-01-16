@@ -26,7 +26,7 @@ from terapy.plot.base import PlotCanvas
 from wx.lib.pubsub import Publisher as pub
 from matplotlib.colors import LinearSegmentedColormap
 from terapy.plot.plot2d import Plot2D
-from terapy.core.axedit import AxisInfos
+from terapy.core.axedit import AxisInfos, du
 import wxmpl
 import wx
 import matplotlib
@@ -46,7 +46,7 @@ class PlotCanvas2D(PlotCanvas,wxmpl.PlotPanel):
     is_data = True
     name = "2D Plot"
     dim = 2
-    def __init__(self, parent=None, id=-1, xlabel=AxisInfos("Delay","ps"), ylabel=AxisInfos("Distance","um"), xscale="linear", yscale="linear"):
+    def __init__(self, parent=None, id=-1, xlabel=AxisInfos("Delay",du["time"]), ylabel=AxisInfos("Distance",du["length"]), xscale="linear", yscale="linear"):
         """
         
             Initialization.
@@ -143,6 +143,7 @@ class PlotCanvas2D(PlotCanvas,wxmpl.PlotPanel):
         
         """
         self.is_full = True
+        array.Rescale(self.labels)
         plt = Plot2D(self,array)
         self.plots.append(plt)
         self.SetPlotColors()
