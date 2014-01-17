@@ -49,9 +49,10 @@ for x in inipath:
     if os.path.exists(x):
         candidates.append(x)
 
-for x in candidates:
+main_config_file = None
+for cnd in candidates:
     try:
-        xmldoc = minidom.parse(x).getElementsByTagName('config')
+        xmldoc = minidom.parse(cnd).getElementsByTagName('config')
         for x in xmldoc:
             scope = x.attributes['scope'].value
             if scope == 'terapy':
@@ -71,6 +72,8 @@ for x in candidates:
                     elif y.nodeName == 'default_units':
                         for z in y.attributes.keys():
                             default_units[str(z)] = str(y.attributes[z].value)
+        main_config_file = cnd
+        break # stop after 1st valid file
     except:
         pass
  

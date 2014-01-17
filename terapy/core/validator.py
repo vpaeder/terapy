@@ -29,16 +29,19 @@ class NumberValidator(wx.PyValidator):
         Validator for numbers
     
     """
-    def __init__(self,floats=True):
+    def __init__(self,floats=True,negative=True):
         wx.PyValidator.__init__(self)
         self.allowed = [8,9,13,27,48,49,50,51,52,53,54,55,56,57,127,314,316]
         self.floats = floats
+        self.negative = negative
         if self.floats:
             self.allowed.append(46)
+        if self.negative:
+            self.allowed.append(45)
         self.Bind(wx.EVT_CHAR, self.OnChar)
     
     def Clone(self):
-        return NumberValidator(floats=self.floats)
+        return NumberValidator(floats=self.floats,negative=self.negative)
     
     def OnChar(self, event):
         if self.allowed.count(event.KeyCode)>0:
@@ -65,3 +68,16 @@ class IntegerValidator(NumberValidator):
     
     def Clone(self):
         return IntegerValidator()
+
+
+class PositiveFloatValidator(NumberValidator):
+    """
+    
+        Validator for positive floating point numbers
+    
+    """
+    def __init__(self):
+        NumberValidator.__init__(self,floats=True,negative=False)
+    
+    def Clone(self):
+        return PositiveFloatValidator()

@@ -443,6 +443,10 @@ class TeraPyMainFrame(wx.Frame):
                 event    -    event object (wx.Event)
         
         """
+        from terapy.core.settings import SettingsDialog
+        dlg = SettingsDialog(self)
+        dlg.ShowModal()
+        dlg.Destroy()
         #dlg.ShowModal()
         #dlg.Destroy()
 
