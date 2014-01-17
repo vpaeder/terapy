@@ -425,6 +425,11 @@ class HistoryControl(wx.Panel):
                 if data!=None:
                     break
             for x in data:
+                # fix axes list in case it isn't the right length
+                if len(x.axes)<len(x.shape):
+                    x.axes.extend([None]*(len(x.shape)-len(x.axes)))
+                elif len(x.axes)>len(x.shape):
+                    x.axes = x.axes[:len(x.shape)]
                 # add plot entry to list
                 self.list.InsertImageStringItem(0,x.name,len(x.shape))
                 self.list.SetItemPyData(0,x)

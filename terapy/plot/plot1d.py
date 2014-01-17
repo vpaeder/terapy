@@ -45,7 +45,6 @@ class Plot1D(Plot):
         Plot.__init__(self, canvas, array)
         self.plot = Line2D([],[])
         self.canvas.axes.add_line(self.plot)
-        self.array = array
         self.SetData(array)
         self.plot.set_visible(True)
 
@@ -58,6 +57,7 @@ class Plot1D(Plot):
                 data     -    data array (DataArray)
         
         """
+        self.array = array
         self.plot.set_data(array.coords[0],array.data)
     
     def GetData(self):

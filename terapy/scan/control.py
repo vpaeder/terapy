@@ -123,16 +123,17 @@ class ScanEventList(wx.Panel):
                 nested list of ScanEvent
         
         """
-        ml = [x.__name__ for x in modules]
-        cn = []
+        ml = [x.__name__ for x in modules] # list of module names
+        cn = [] # current tree branch
         for x in tree:
             if hasattr(x,'tagName'):
                 if x.tagName == 'item':
                     attrs = x.attributes
-                    if ml.count(attrs['class'].value)>0:
-                        idx = ml.index(attrs['class'].value)
-                        cn.append(modules[idx](self.list_events))
-                        ParseAttributes(attrs,cn[-1])
+                    if attrs.has_key('class'):
+                        if ml.count(attrs['class'].value)>0:
+                            idx = ml.index(attrs['class'].value)
+                            cn.append(modules[idx](self.list_events))
+                            ParseAttributes(attrs,cn[-1])
                 if x.hasChildNodes():
                     cn.append(self.ParseXMLTree(x.childNodes))
         return cn

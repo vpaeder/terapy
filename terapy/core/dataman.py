@@ -488,8 +488,8 @@ class DataArray():
         narray.name = self.name
         narray.scanDim = self.scanDim
         narray.filename = self.filename
-        narray.input = self.input
-        narray.axes = self.axes[:]
+        narray.input = self.input.copy()
+        narray.axes = [x.copy() for x in self.axes]
         
         return narray
 

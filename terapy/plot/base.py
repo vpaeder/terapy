@@ -23,9 +23,10 @@
 """
 
 import wx
-from terapy.core.axedit import ConvertUnits
+from terapy.core.axedit import ConvertUnits, FormatUnits
+from wx.lib.pubsub import Publisher as pub
 
-class PlotCanvas():
+class PlotCanvas(wx.Panel):
     """
     
         Generic canvas class.
@@ -51,12 +52,17 @@ class PlotCanvas():
                 id        -    id (int)
                 
         """
+        if not(isinstance(self,wx.Panel)):
+            wx.Panel.__init__(self,parent,id)
         self.parent = parent
         self.plots = [] # plots on this canvas
         self.is_full = False # if True, tells that canvas can't receive more plots 
         self.children = [] # canvases linked to this one (e.g. post-processing canvases)
         self.source = None # master canvas
         self.drag_object = None
+        self.Bind(wx.EVT_WINDOW_DESTROY, self.OnDelete, self)
+        pub.subscribe(self.ChangeDefaultUnits, "default_units.changed")
+        
     
     def EditAxes(self, event=None):
         """
@@ -81,7 +87,40 @@ class PlotCanvas():
             wx.CallAfter(self.Update)
         else:
             dlg.Destroy()
+    
+    def ChangeDefaultUnits(self, inst=None):
+        # convert plot units to new units
+        units = [FormatUnits(x.units) for x in self.labels]
+        for x in units:x._magnitude=1.0
         
+        # create new labels
+        labels = [x.copy() for x in self.labels]
+        for n in range(len(labels)):
+            labels[n].units = units[n]
+        
+        # convert plot data to new units
+        for x in self.plots:
+            x.array.Rescale(labels,self.labels)
+            x.SetData(x.array)
+        
+        # set new labels
+        self.labels = labels
+        
+        # update
+        wx.CallAfter(self.Update)
+    
+    def OnDelete(self, event=None):
+        """
+        
+            Clean up before destroying object.
+            
+            Parameters:
+                event    -    wx.Event
+        
+        """
+        pub.unsubscribe(self.ChangeDefaultUnits, "default_units.changed")
+        event.Skip()
+    
     def Update(self, event=None):
         """
         

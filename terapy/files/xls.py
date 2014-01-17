@@ -77,7 +77,7 @@ class XLS(FileFilter):
 			c1 = np.unique(c1)
 			c2 = np.unique(c2)
 			d = d.reshape((len(c1),len(c2)))
-			x = DataArray(shape=(len(c1),len(c2)))
+			x = DataArray(shape=[len(c1),len(c2)])
 			x.data = d
 		return x
 	

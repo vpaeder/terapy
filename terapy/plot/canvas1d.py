@@ -59,8 +59,8 @@ class PlotCanvas1D(PlotCanvas,wxmpl.PlotPanel):
                 yscale    -    ordinate scale type (linear or log)
         
         """
-        PlotCanvas.__init__(self,parent,id)
         wxmpl.PlotPanel.__init__(self,parent,id)
+        PlotCanvas.__init__(self,parent,id)
         
         fig = self.get_figure()
         self.axes = fig.gca()
@@ -139,14 +139,14 @@ class PlotCanvas1D(PlotCanvas,wxmpl.PlotPanel):
             # set children units as a function of parent units and filter bank effect
             labels = [y.copy() for y in x.labels]
             old_labels = [y.copy() for y in x.labels]
-            units = x.bank.GetUnits([y.units for y in self.labels])
+            units = [FormatUnits(u) for u in x.bank.GetUnits([y.units for y in self.labels])]
+            for u in units:u._magnitude=1.0
             for n in range(2): labels[n].units = units[n]
             
             ConvertUnits(x.labels, labels, ask_incompatible = False)
             for y in x.plots:
-                array = y.GetData()
-                array.Rescale(new_labels=self.labels, defaults=old_labels)
-                y.SetData(array)
+                y.array.Rescale(new_labels=labels, defaults=old_labels)
+                y.SetData(y.array)
             # update units
             x.labels = labels
             x.Update()
@@ -202,7 +202,7 @@ class PlotCanvas1D(PlotCanvas,wxmpl.PlotPanel):
         self.plots.append(plt)
         for x in self.children:
             # if canvas has children, add plots to children too
-            nplt = x.AddPlot(plt.GetData())
+            nplt = x.AddPlot(plt.array)
             nplt.source = plt
             plt.children.append(nplt)
         
@@ -300,19 +300,6 @@ class PlotCanvas1D(PlotCanvas,wxmpl.PlotPanel):
                 z.children.append(cnv)
                 # if canvas has a parent canvas, add suitable reference to new canvas
                 cnv.source = self if z.source==None else z
-                # if current canvas contains plots, add processed copies to new canvas
-                for y in self.plots:
-                    arr = y.GetData()
-                    plt = y.__class__(cnv,arr)
-                    plt.SetColor(y.GetColor())
-                    cnv.plots.append(plt)
-                    # if canvas has a parent canvas, add suitable references to new plot
-                    # otherwise, set current plot as source to new plot
-                    z = y
-                    while len(z.children)>0:
-                        z = z.children[-1]
-                    z.children.append(plt)
-                    plt.source = y if y.source==None else z
                 # set filter bank
                 bank = FilterBank(dim=self.dim)
                 if fname=="":
@@ -326,7 +313,19 @@ class PlotCanvas1D(PlotCanvas,wxmpl.PlotPanel):
                 cnv.SetFilterBank(bank)
                 # adjust canvas units from source canvas + filter bank effect
                 units = [FormatUnits(v) for v in bank.GetUnits([u.units for u in cnv.source.labels])]
+                for x in units:x._magnitude=1.0
                 for n in range(len(units)): cnv.labels[n].units = units[n]
+                # if current canvas contains plots, add processed copies to new canvas
+                for y in self.plots:
+                    plt = cnv.AddPlot(y.array)
+                    plt.SetColor(y.GetColor())
+                    # if canvas has a parent canvas, add suitable references to new plot
+                    # otherwise, set current plot as source to new plot
+                    z = y
+                    while len(z.children)>0:
+                        z = z.children[-1]
+                    z.children.append(plt)
+                    plt.source = y if y.source==None else z
                 cnv.Update()
                 break
     

@@ -67,7 +67,6 @@ class Text(FileFilter):
 
 	def read1D(self, fname, tname):
 		# open file and read column 0 and 1, separator is tab
-		data = DataArray(name=tname)
 		data_t = []
 		data_x = []
 		fp = open(fname, 'r')
@@ -78,6 +77,7 @@ class Text(FileFilter):
 				data_x.append(float(args[1]))
 		fp.close()
 		
+		data = DataArray(name=tname, shape=[len(data_t)])
 		data.coords = [np.array(data_t)]
 		data.data = np.array(data_x)
 		data.shape = [len(data_x)]
@@ -85,8 +85,6 @@ class Text(FileFilter):
 
 	def read1Dv(self, fname, tname):
 		# open file and read column 0, 1 and 2 (variance), separator is tab
-		data1 = DataArray(name=tname+" 0")
-		data2 = DataArray(name=tname+" 1")
 		data_t = []
 		data_x = []
 		data_v = []
@@ -101,6 +99,9 @@ class Text(FileFilter):
 		if len(data_v)<len(data_x):
 			data_v = np.zeros(len(data_x))
 		
+		data1 = DataArray(name=tname+" 0", shape=[len(data_t)])
+		data2 = DataArray(name=tname+" 1", shape=[len(data_t)])
+		
 		data1.coords = [np.array(data_t)]
 		data1.data = np.array(data_x)
 		data1.shape = [len(data_x)]
@@ -110,7 +111,6 @@ class Text(FileFilter):
 		return [data1, data2]
 
 	def read2D(self, fname, tname):
-		data = DataArray(name=tname)
 		fp = open(fname, 'r')
 		x = []
 		y = []
@@ -137,10 +137,10 @@ class Text(FileFilter):
 			for ny in range(len(data_y)):
 					data_2d[:,ny] = z[ny*len(data_x):(ny+1)*len(data_x)]
 		
+		data = DataArray(name=tname, shape=list(data_2d.shape))
 		data.coords.append(data_x)
 		data.coords.append(data_y)
 		data.data = data_2d
-		data.shape = list(data_2d.shape)
 		return [data]
 	
 	def save(self, fname, arr):

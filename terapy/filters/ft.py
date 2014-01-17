@@ -47,7 +47,7 @@ class FourierTransform(Filter):
         df  = 1/abs(array.coords[0][-1] - array.coords[0][0])    # time is stored in ps -> 1/ps = THz
         data_f = np.linspace(0, df*(array.shape[0]-1), array.shape[0])
         # calculate spectrum 
-        data_s = abs(fft(array.data))
+        data_s = abs(fft(array.data))*(array.coords[0][1]-array.coords[0][0])
         
         array.coords[0] = data_f[:len(data_f)/2-1]
         array.data = data_s[:len(data_f)/2-1]

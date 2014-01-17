@@ -365,14 +365,17 @@ class FilterBank():
         
         """
         # apply all filters
-        narray = DataArray(shape=array.shape[:])
-        narray.coords = array.coords[:]
-        narray.data = array.data[:]
+        narray = array.Copy()
+        units = [x.units for x in narray.axes]
+        units.append(narray.input.units)
 
         for ft in self.filters:
             if ft.is_active:
                 ft.apply_filter(narray)
+                units = ft.get_units(units)
         
+        for n in range(len(narray.axes)): narray.axes[n].units = units[n]
+        narray.input.units = units[-1]
         return narray
     
     def GetUnits(self, units):
@@ -392,6 +395,7 @@ class FilterBank():
             if ft.is_active:
                 units = ft.get_units(units)
         
+        for x in units: x._magnitude = 1.0
         return units
         
 

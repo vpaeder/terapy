@@ -70,6 +70,7 @@ class PlotCanvasF(PlotCanvas1D):
                 event    -    wx.Event
         
         """
+        PlotCanvas1D.OnDelete(self,event)
         pub.unsubscribe(self.PostProcess, "filter.change")
         event.Skip()
 
@@ -148,7 +149,7 @@ class PlotCanvasF(PlotCanvas1D):
         if inst.data == self.bank:
             self.bank.RecomputeReference()
             for x in self.plots:
-                x.SetData(self.bank.ApplyFilters(x.source.GetData()))
+                x.SetData(self.bank.ApplyFilters(x.source.array))
             self.Update()
             if len(self.children)>0:
                 inst.data = self.children[-1].bank

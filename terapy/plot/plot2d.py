@@ -43,10 +43,7 @@ class Plot2D(Plot):
         
         """
         Plot.__init__(self, canvas, array)
-        if len(array.shape)==2:
-            self.SetData(array)
-        else:
-            self.plot = zeros((20,20))
+        self.SetData(array)
     
     def SetData(self, array):
         """

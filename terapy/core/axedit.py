@@ -296,7 +296,7 @@ class AxisInfos():
         return self.label()
     
     def __repr__(self):
-        return "<AxisInfos(%s, %s)" % (self.name, self.pretty_units())
+        return "<AxisInfos(%s, %s) instance at %s>" % (self.name, self.pretty_units(), hex(id(self)))
     
     def name(self):
         """
@@ -418,7 +418,10 @@ def ConvertUnits(old, new, ask_incompatible=True):
                 if wx.MessageBox("New units for axis %d (%s) are incompatible with old ones (%s). Apply anyway?" % (n, "{:P}".format(new[n].units.units), "{:P}".format(old[n].units.units)), "Incompatible units", style=wx.YES | wx.NO) == wx.YES:
                     old[n] = new[n]
             else:
-                old[n] = new[n]
+                try:
+                    old[n] = new[n]
+                except:
+                    old.append(new[n])
         old[n].units = FormatUnits(old[n].units)
     
     return factors
