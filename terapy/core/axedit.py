@@ -37,7 +37,10 @@ for y in [['hertz','Hz'],['meter','m'],['second','s'],['volt','V'],['ampere','A'
 # default units
 du = {}
 for x in default_units:
-    du[x] = Q_(1.0,urg[default_units[x]])
+    try:
+        du[x] = Q_(1.0,urg[default_units[x]])
+    except:
+        print "WARNING: can't understand units'%s' " % (x)
 
 class AxesPropertiesDialog(wx.Dialog):
     """

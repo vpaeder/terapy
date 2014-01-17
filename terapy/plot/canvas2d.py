@@ -54,8 +54,8 @@ class PlotCanvas2D(PlotCanvas,wxmpl.PlotPanel):
             Parameters:
                 parent    -    parent window (wx.Window)
                 id        -    id (int)
-                xlabel    -    label and units of abscissa axis ([str,quantities])
-                ylabel    -    label and units of ordinate axis ([str,quantities])
+                xlabel    -    label and units of abscissa axis (terapy.axedit.AxisInfos)
+                ylabel    -    label and units of ordinate axis (terapy.axedit.AxisInfos)
                 xscale    -    abscissa scale type (linear or log)
                 yscale    -    ordinate scale type (linear or log)
         
@@ -70,6 +70,7 @@ class PlotCanvas2D(PlotCanvas,wxmpl.PlotPanel):
         self.axes.set_xscale(xscale)
         self.axes.set_yscale(yscale)
         
+        # re-format axis units into current default units 
         xlabel.units = FormatUnits(xlabel.units)
         ylabel.units = FormatUnits(ylabel.units)
         for x in [xlabel,ylabel]: x.units._magnitude = 1.0

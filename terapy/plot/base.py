@@ -89,6 +89,14 @@ class PlotCanvas(wx.Panel):
             dlg.Destroy()
     
     def ChangeDefaultUnits(self, inst=None):
+        """
+        
+            Change canvas units and scale plots to default units.
+            
+            Parameters:
+                inst    -    pubsub data (not used)
+        
+        """
         # convert plot units to new units
         units = [FormatUnits(x.units) for x in self.labels]
         for x in units:x._magnitude=1.0

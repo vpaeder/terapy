@@ -89,6 +89,14 @@ class SettingsDialog(wx.Dialog):
         self.button_OK.Bind(wx.EVT_BUTTON, self.OnOk)
 
     def OnEditorShown(self, event=None):
+        """
+        
+            Actions preceding editing a cell.
+            
+            Parameters:
+                event    -    wx.Event
+        
+        """
         x = self.slist.keys()[event.Row]
         if self.slist[x][2]=='n':
             editor = self.sheet.GetCellEditor(event.Row,event.Col)
@@ -105,6 +113,14 @@ class SettingsDialog(wx.Dialog):
                 self.slist[x][1] = dlg.GetPath()
     
     def OnEditorHidden(self, event=None):
+        """
+        
+            Actions after editing a cell is over.
+            
+            Parameters:
+                event    -    wx.Event
+        
+        """
         editor = self.sheet.GetCellEditor(event.Row,event.Col)
         control = editor.GetControl()
         x = self.slist.keys()[event.Row]
@@ -144,7 +160,16 @@ class SettingsDialog(wx.Dialog):
         event.Skip()
 
     def SaveSettings(self, fname):
+        """
+        
+            Save main settings to the file defined in terapy.core
+            By default: <root directory>/terapy.ini
+            Or: <config directory>/terapy.ini
+        
+        """
         from xml.dom import minidom
+        from terapy.core.axedit import du
+        
         doc = minidom.Document()
         croot = doc.createElement("config")
         croot.attributes["scope"] = "terapy"
@@ -153,7 +178,12 @@ class SettingsDialog(wx.Dialog):
             root = doc.createElement(x)
             root.attributes["value"] = str(self.slist[x][1])
             croot.appendChild(root)
-            
+        for x in du:
+            root = doc.createElement("units")
+            root.attributes["type"] = x
+            root.attributes["symbol"] = "{:~}".format(du[x].units)
+            croot.appendChild(root)
+        
         f = open(fname,'w')
         doc.writexml(f,indent="  ", addindent="  ", newl="\n")
         f.close()

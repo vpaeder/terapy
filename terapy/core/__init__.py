@@ -69,9 +69,8 @@ for cnd in candidates:
                         module_path = y.attributes['value'].value
                     elif y.nodeName == 'refresh_delay':
                         refresh_delay = float(y.attributes['value'].value)
-                    elif y.nodeName == 'default_units':
-                        for z in y.attributes.keys():
-                            default_units[str(z)] = str(y.attributes[z].value)
+                    elif y.nodeName == 'units':
+                        default_units[str(y.attributes['type'].value)] = str(y.attributes['symbol'].value) 
         main_config_file = cnd
         break # stop after 1st valid file
     except:
