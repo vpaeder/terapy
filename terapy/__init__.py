@@ -43,7 +43,7 @@ from terapy.scan.control import ScanEventList
 from terapy.core.history import HistoryControl
 from terapy.core import icon_path
 
-__version__         = "2.00b2 / 18.01.2014"
+__version__         = "2.00b3 / 18.01.2014"
 
 class TeraPyMainFrame(wx.Frame):
     def __init__(self):
