@@ -56,7 +56,7 @@ class LombScargle(Filter):
 
     def get_units(self, units):
         if len(units)!=2: return [1,1]
-        return [1/units[0], units[1]*units[0]]
+        return [1/units[0], units[1]]
     
     def get_icon(self):
         return wx.Image(icon_path + "filter-transform.png").ConvertToBitmap()

@@ -70,6 +70,10 @@ class PlotCanvas2D(PlotCanvas,wxmpl.PlotPanel):
         self.axes.set_xscale(xscale)
         self.axes.set_yscale(yscale)
         
+        # must make a copy of labels, otherwise same instance is used for every plot
+        xlabel = xlabel.copy()
+        ylabel = ylabel.copy()
+
         # re-format axis units into current default units 
         xlabel.units = FormatUnits(xlabel.units)
         ylabel.units = FormatUnits(ylabel.units)

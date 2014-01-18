@@ -384,19 +384,49 @@ def FormatUnits(units):
     
     """
     # convert units to default units
-    for x in units.units.keys():
+    keys = units.units.keys()
+    for x in keys:
         for y in du.values():
-            ux = urg[x].dimensionality.values()[0]
-            uy = y.dimensionality.values()[0]
+            ux = urg[x].dimensionality
+            ux_inv = (1.0/urg[x]).dimensionality
+            uy = y.dimensionality
             cur = units.units[x]
             
-            if urg[x].dimensionality.keys()[0]==y.dimensionality.keys()[0] and len(urg[x].dimensionality.keys())==len(y.dimensionality.keys())==1:
-                if cur == ux == uy or cur == -ux == -uy:
-                    units = units/urg[x]*urg[x].to(y)
-                elif cur == ux == -uy < 0 or cur == uy == -ux < 0:
-                    units = units*urg[x]*(1.0/urg[x]).to(y)
+            if uy==ux and cur>0:
+                # same dimensionality as one default unit
+                units = units/urg[x]*urg[x].to(y)
+                break
+            elif uy==ux and cur<0:
+                # same dimensionality as one default unit
+                # but 1/unit => must check that no other default
+                # unit with dimensionality 1/... can be found
+                if [u.dimensionality for u in du.values()].count(ux_inv)==0:
+                    units = units*urg[x]/urg[x].to(y)
+                    break
+            elif uy==ux_inv and cur<0:
+                units = units*urg[x]*(1.0/urg[x]).to(y)
+                break
     
-    # TODO: merge and simplify units
+    # simplify units
+    for x in du.values():
+        # see if one default unit has the inverse dimensionality of another one
+        ux = x.dimensionality
+        ux_inv = (1.0/x).dimensionality
+        if [u.dimensionality for u in du.values()].count((1/x).dimensionality):
+            # if yes, check that the units don't contain both
+            idx = [u.dimensionality for u in du.values()].index((1/x).dimensionality)
+            x_inv = du.values()[idx]
+            c_x = units.units.keys().count(x.units.keys()[0])
+            c_x_inv = units.units.keys().count(x_inv.units.keys()[0])
+            if c_x>0 and c_x_inv>0:
+                # if they do, divide units by minimum common power 
+                i_x = units.units.keys().index(x.units.keys()[0]) 
+                i_x_inv = units.units.keys().index(x_inv.units.keys()[0])
+                v_x = units.units.values()[i_x]
+                v_x_inv = units.units.values()[i_x_inv]
+                dv = min([v_x,v_x_inv])
+                units = units/(x**dv)/(x_inv**dv)
+    
     return units
 
 def ConvertUnits(old, new, ask_incompatible=True):
