@@ -19,6 +19,7 @@ backup
 data
 build
 dist
+web
 terapy.egg-info
 *.pyc
 *.dll
