@@ -485,15 +485,12 @@ class TeraPyMainFrame(wx.Frame):
         self.StopDeviceTimer()
         
         print "reset..."
-        axisID = self.AxisList.GetSelection()
-        if(axisID != ""):
-            axis = hardware.devices['axis'][axisID]
-            print "reset", axisID
-            axis.reset()        
-        inputID = self.InputList.GetSelection()
-        if(inputID != ""):
-            inpt = hardware.devices['input'][inputID]            
-            inpt.reset()
+        for x in hardware.devices['axis']:
+            print "reset", x.name
+            x.reset()        
+        for x in hardware.devices['input']:
+            print "reset", x.name
+            x.reset()        
         
         # restart timers
         self.StartDeviceTimer()

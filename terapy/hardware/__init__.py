@@ -35,7 +35,6 @@ import sys
 # device descriptions
 from terapy.hardware import input
 from terapy.hardware import axes
-from terapy.core import device_file
 
 def initiate_hardware():
     """
@@ -119,6 +118,8 @@ def store_hardware_info():
     
     """
     global devices # use global device list
+    from terapy.core import device_file
+    
     if device_file==None:
         print "WARNING: device file not defined, saving to devices.ini"
         device_file = "devices.ini"
@@ -144,6 +145,7 @@ def restore_hardware_info():
     """    
     global devices                         # use global device list
     create_default_devices()            # add default devices - this also initializes the devices dict properly
+    from terapy.core import device_file
     if device_file==None:
         print "WARNING: no device_file defined"
         return # no file defined
