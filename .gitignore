@@ -25,3 +25,7 @@ terapy.egg-info
 *.dll
 *.pyd
 html.zip
+.settings
+.project
+.pydevproject
+.gitignore
