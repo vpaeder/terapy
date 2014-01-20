@@ -8,7 +8,7 @@ except:
 	pass
 
 setup(name='terapy',
-      version='2.00b4',
+      version='2.00b5',
       description='Graphical interface for scientific measurements',
       author='Vincent Paeder, Daniel Dietze',
       author_email='vincent.paeder@tuwien.ac.at',
