@@ -43,7 +43,8 @@ from terapy.scan.control import ScanEventList
 from terapy.core.history import HistoryControl
 from terapy.core import icon_path
 
-__version__         = "2.00b4 / 19.01.2014"
+__version__         = "2.00b5 / 20.01.2014"
+__doc_url__         = "http://pythonhosted.org/terapy/doc.html"
 
 class TeraPyMainFrame(wx.Frame):
     def __init__(self):
@@ -182,6 +183,7 @@ class TeraPyMainFrame(wx.Frame):
         Create main menu
         
         """
+        # File menu
         menuFile = wx.Menu()
         mitem = menuFile.Append(wx.NewId(), "&Open scan")
         self.Bind(wx.EVT_MENU, self.OnLoad, id=mitem.Id)
@@ -190,12 +192,11 @@ class TeraPyMainFrame(wx.Frame):
         self.Bind(wx.EVT_MENU, self.OnSettings, id=mitem.Id)
         mitem = menuFile.Append(wx.NewId(), "&Default units")
         self.Bind(wx.EVT_MENU, self.OnDefaultUnits, id=mitem.Id)
-        mitem = menuFile.Append(wx.NewId(), "&About")
-        self.Bind(wx.EVT_MENU, self.OnAbout, id=mitem.Id)
         menuFile.AppendSeparator()
         mitem = menuFile.Append(wx.NewId(), "E&xit")
         self.Bind(wx.EVT_MENU, self.OnQuit, id=mitem.Id)
         
+        # hardware menu
         menuHardware = wx.Menu()
         mitem = menuHardware.Append(wx.NewId(), "&Reset Current Devices")
         self.Bind(wx.EVT_MENU, self.OnResetHardware, id=mitem.Id)
@@ -208,9 +209,17 @@ class TeraPyMainFrame(wx.Frame):
         menuConfigMain.AppendSubMenu(self.menuConfigAxes, "&Motion Devices")
         menuHardware.AppendSubMenu(menuConfigMain, "&Configure")        
         
+        # help menu
+        menuHelp = wx.Menu()
+        mitem = menuHelp.Append(wx.NewId(), "&About TeraPy")
+        self.Bind(wx.EVT_MENU, self.OnAbout, id=mitem.Id)
+        mitem = menuHelp.Append(wx.NewId(), "&Online documentation")
+        self.Bind(wx.EVT_MENU, self.OnOpenDoc, id=mitem.Id)
+        
         self.menuBar = wx.MenuBar()
         self.menuBar.Append(menuFile, "&File")
-        self.menuBar.Append(menuHardware, "&Hardware")
+        self.menuBar.Append(menuHardware, "Ha&rdware")
+        self.menuBar.Append(menuHelp, "&Help")
         self.SetMenuBar(self.menuBar)
     
     def CreateHardwareConfigMenu(self):
@@ -430,7 +439,7 @@ class TeraPyMainFrame(wx.Frame):
                 event    -    event object (wx.Event)
         
         """
-        dlg = wx.MessageDialog(self, "TERA THz-TDS GUI (c) 2010-2013 D. Dietze, 2013-2014 V. Paeder\nVersion: " + __version__,caption="About",style=wx.OK,pos=wx.DefaultPosition)
+        dlg = wx.MessageDialog(self, "TeraPy (c) 2010-2013 D. Dietze, 2013-2014 V. Paeder\nVersion: " + __version__,caption="About",style=wx.OK,pos=wx.DefaultPosition)
         dlg.ShowModal()
         dlg.Destroy()
     
@@ -645,7 +654,16 @@ class TeraPyMainFrame(wx.Frame):
         hardware.devices["axis"][mId].configure()
         hardware.store_hardware_info()
         self.StartDeviceTimer()                        # restart signal refresh
+    
+    def OnOpenDoc(self, event=None):
+        """
         
+            Open documentation in web browser.
+        
+        """
+        import webbrowser
+        webbrowser.open(__doc_url__)
+    
     def StartDeviceTimer(self):
         """
         
