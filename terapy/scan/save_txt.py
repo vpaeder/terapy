@@ -22,10 +22,10 @@
 
 """
 
-from terapy.scan.save import Save
+from terapy.scan.save import SaveBase
 from terapy.files.text import Text
 
-class Save_TXT(Save):
+class Save_TXT(SaveBase):
     """
     
         Save to text file scan event class
@@ -33,7 +33,7 @@ class Save_TXT(Save):
     """
     __extname__ = "Save text"
     def __init__(self, parent = None):
-        Save.__init__(self, parent)
+        SaveBase.__init__(self, parent)
         self.is_visible = True
         self.filter = Text()
         

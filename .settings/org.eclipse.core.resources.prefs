@@ -91,6 +91,7 @@ encoding//terapy/scan/save.py=utf-8
 encoding//terapy/scan/save_h5.py=utf-8
 encoding//terapy/scan/save_txt.py=utf-8
 encoding//terapy/scan/save_xls.py=utf-8
+encoding//terapy/scan/saveg.py=utf-8
 encoding//terapy/scan/scan_l.py=utf-8
 encoding//terapy/scan/scan_lf.py=utf-8
 encoding//terapy/scan/scan_s.py=utf-8

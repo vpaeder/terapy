@@ -22,10 +22,10 @@
 
 """
 
-from terapy.scan.save import Save
+from terapy.scan.save import SaveBase
 from terapy.files.xls import XLS
 
-class Save_XLS(Save):
+class Save_XLS(SaveBase):
     """
     
         Save to Excel spreadsheet scan event class
@@ -33,7 +33,7 @@ class Save_XLS(Save):
     """
     __extname__ = "Save Excel"
     def __init__(self, parent = None):
-        Save.__init__(self, parent)
+        SaveBase.__init__(self, parent)
         self.is_visible = True
         self.filter = XLS()
         

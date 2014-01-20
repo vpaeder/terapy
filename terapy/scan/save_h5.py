@@ -22,11 +22,11 @@
 
 """
 
-from terapy.scan.save import Save
+from terapy.scan.save import SaveBase
 import h5py as h5
 from terapy.files.hdf5 import HDF5
 
-class Save_H5(Save):
+class Save_H5(SaveBase):
     """
     
         Save to HDF5 scan event class
@@ -34,7 +34,7 @@ class Save_H5(Save):
     """
     __extname__ = "Save HDF5"
     def __init__(self, parent = None):
-        Save.__init__(self, parent)
+        SaveBase.__init__(self, parent)
         self.is_visible = True
         self.filter = HDF5()
         

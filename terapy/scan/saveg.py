@@ -26,37 +26,46 @@ from terapy.scan.base import ScanEvent
 import wx
 import os
 from terapy.core import icon_path, default_path
+from terapy.core.choice import ChoicePopup
 from time import strftime, localtime
 
-class SaveBase(ScanEvent):
+class Save(ScanEvent):
     """
     
         Save scan event base class
     
     """
-    __extname__ = "SaveBase"
+    __extname__ = "Save"
     def __init__(self, parent = None):
         ScanEvent.__init__(self, parent)
         self.filename = ""
+        self.fclass = ""
         self.autoname = True
-        self.propNames = ["File name","Automatic"]
+        self.propNames = ["File format","File name","Automatic"]
         self.is_save = True
-        self.is_visible = False
-        self.config = ["filename","autoname"]
+        self.config = ["fclass","filename","autoname"]
         self.filter = None
         
     def run(self, data):
-        pass
+        fname = self.make_filename()
+        for n in range(self.m_id+1): # save what has been measured before calling 'save'
+            data.data[n].filename = fname
+            self.filter.save(fname, data.data[n],name="M_"+str(n))
     
     def refresh(self):
         ScanEvent.refresh(self)
+        from terapy import files
         if self.autoname: self.filename=""
         if hasattr(self,'fname'): del self.fname
+        modnames = [x.__name__ for x in files.modules if x().can_save]
+        if modnames.count(self.fclass)==0:
+            self.fclass = modnames[0]
+        self.filter = files.modules[modnames.index(self.fclass)]()
     
     def set(self, parent=None):
-        dlg = FileSelectionDialog(parent, fname=self.filename, wildcard=self.get_wildcard(), autoname=self.autoname)
+        dlg = FileFilterSelectionDialog(parent, fname=self.filename, fclass=self.fclass, autoname=self.autoname)
         if dlg.ShowModal() == wx.ID_OK:
-            self.filename,self.autoname = dlg.GetValue()
+            self.fclass,self.filename,self.autoname = dlg.GetValue()
             dlg.Destroy()
             return True
         else:
@@ -64,39 +73,61 @@ class SaveBase(ScanEvent):
             return False
     
     def populate(self):
-        self.propNodes = [os.path.basename(self.filename),["No","Yes"][self.autoname]]
+        self.propNodes = [self.fclass,os.path.basename(self.filename),["No","Yes"][self.autoname]]
         self.create_property_root()
         self.set_property_nodes(True)
         
     def edit_label(self, event, pos):
+        from terapy import files
         if pos==0:
+            br = self.host.GetBoundingRect(self.get_property_node(0))
+            w = ChoicePopup(self.host,-1,choices=[x().desc + " (" + ", ".join(x().ext) + ")" for x in files.modules if x().can_save],pos=br.GetPosition(), size=br.GetSize(), style=wx.CB_DROPDOWN|wx.CB_READONLY)
+            w.SetSelection([x.__name__ for x in files.modules if x().can_save].index(self.fclass))
+            w.Bind(wx.EVT_CHOICE,self.onSelectFilter)
+            w.SetFocus()
+            if wx.Platform == '__WXMSW__':
+                w.Bind(wx.EVT_KILL_FOCUS,self.onSelectFilter)
+        elif pos==1:
             event.Veto()
-            dlg = wx.FileDialog(self.host, "Choose output file", os.getcwd(), self.filename, self.get_wildcard() + "|All files (*.*)|*.*", wx.SAVE)
+            dlg = wx.FileDialog(self.host, "Choose output file", os.getcwd(), self.filename, files.save_wildcards(allfiles=False), wx.SAVE)
             if dlg.ShowModal()==wx.ID_OK:
                 self.filename = dlg.GetPath()
                 self.autoname = False
+                self.filter = files.modules[dlg.GetFilterIndex()]()
+                self.fclass = self.filter.__class__.__name__
             dlg.Destroy()
-        elif pos==1:
+        elif pos==2:
             event.Veto()
             self.autoname = not(self.autoname)
         
         self.refresh()
                 
-        self.propNodes = [os.path.basename(self.filename),["No","Yes"][self.autoname]]
+        self.propNodes = [self.fclass,os.path.basename(self.filename),["No","Yes"][self.autoname]]
         self.set_property_nodes(True)
 
-    def get_wildcard(self):
-        if self.filter!=None:
-            wc = self.filter.desc + " ("
-            for x in self.filter.ext:
-                wc += x + ","
-            wc = wc[:-1] + ")|"
-            for x in self.filter.ext:
-                wc += x + ";"
-            return wc[:-1]
-        else:
-            return ""
-    
+    def onSelectFilter(self, event=None):
+        from terapy import files
+        mods = [x for x in files.modules if x().can_save]
+        self.filter = mods[event.GetEventObject().GetSelection()]()
+        self.fclass = self.filter.__class__.__name__
+        self.propNodes[0] = self.fclass
+        # change file extension
+        fpath = list(os.path.splitext(self.filename))
+        if len(fpath)>1:
+            fpath[-1] = self.filter.ext[0][2:]
+            if fpath[0]=="": fpath[0]="default"
+            self.filename = ".".join(fpath)
+        
+        if self.autoname:
+            self.filename = ""
+        self.propNodes[1] = os.path.basename(self.filename)
+        
+        self.set_property_nodes()
+        # notify tree that editing is finished
+        evt = wx.TreeEvent(wx.wxEVT_COMMAND_TREE_END_LABEL_EDIT,self.host.GetId())
+        evt.SetItem(self.host.GetSelection())
+        self.host.GetEventHandler().ProcessEvent(evt)
+
     def make_filename(self):
         # create temporary 'fname' variable to store name during measurement (will be wiped with self.refresh())
         if not(hasattr(self,'fname')):
@@ -121,13 +152,13 @@ class SaveBase(ScanEvent):
     def get_icon(self):
         return wx.Image(icon_path + "event-save.png").ConvertToBitmap()
 
-class FileSelectionDialog(wx.Dialog):
+class FileFilterSelectionDialog(wx.Dialog):
     """
     
         Save scan event configuration dialog
     
     """
-    def __init__(self, parent = None, title="Select output file", fname = "", wildcard = "", autoname = True):
+    def __init__(self, parent = None, title="Select output file", fname = "", fclass = "", autoname = True):
         """
         
             Initialization.
@@ -141,10 +172,20 @@ class FileSelectionDialog(wx.Dialog):
         
         """
         wx.Dialog.__init__(self, parent, title=title)
+        from terapy import files
+        descs = [x().desc + " (" + ", ".join(x().ext) + ")" for x in files.modules if x().can_save]
+        self.mods = [x for x in files.modules if x().can_save]
+         
+        self.label_modules = wx.StaticText(self, -1, "File type")
+        self.choice_modules = wx.Choice(self, -1, choices=descs)
         self.label_filename = wx.StaticText(self, -1, "File name")
         self.input_filename = wx.TextCtrl(self, -1, os.path.basename(fname))
         self.button_filename = wx.Button(self,-1,"...")
         self.check_autoname = wx.CheckBox(self,-1,"Name with time stamp")
+        
+        self.fclass = fclass
+        if [x.__name__ for x in self.mods].count(fclass):
+            self.choice_modules.SetSelection([x.__name__ for x in self.mods].index(fclass))
 
         self.button_OK = wx.Button(self, wx.ID_OK)
         self.button_Cancel = wx.Button(self, wx.ID_CANCEL)
@@ -160,6 +201,8 @@ class FileSelectionDialog(wx.Dialog):
         hbox.Add(self.button_Cancel, 0, wx.RIGHT|wx.ALIGN_RIGHT, 5)
         hbox.Add(self.button_OK, 0, wx.RIGHT|wx.ALIGN_RIGHT, 5)
         sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(self.label_modules, 0, wx.ALL|wx.EXPAND, 2)
+        sizer.Add(self.choice_modules, 0, wx.ALL|wx.EXPAND, 2)
         sizer.Add(self.label_filename, 0, wx.ALL|wx.EXPAND, 2)
         sizer.Add(hboxf, 0, wx.ALL|wx.EXPAND, 2)
         sizer.Add(self.check_autoname, 0, wx.ALL|wx.EXPAND, 2)
@@ -175,8 +218,8 @@ class FileSelectionDialog(wx.Dialog):
         self.Bind(wx.EVT_BUTTON, self.OnFilenameButton, self.button_filename)
         self.input_filename.Bind(wx.EVT_SET_FOCUS, self.OnSetFocus, self.input_filename)
         self.input_filename.Bind(wx.EVT_KILL_FOCUS, self.OnKillFocus, self.input_filename)
+        self.Bind(wx.EVT_CHOICE, self.OnTypeChange, self.choice_modules)
         self.fname = fname
-        self.wc = wildcard
     
     def OnAutonameCheck(self, event = None):
         """
@@ -226,11 +269,23 @@ class FileSelectionDialog(wx.Dialog):
                 event    -    wx.Event
         
         """
-        dlg = wx.FileDialog(self, "Choose output file", os.getcwd(),"", self.wc + "|All files (*.*)|*.*", wx.SAVE)
+        from terapy import files
+        dlg = wx.FileDialog(self, "Choose output file", os.getcwd(),"", files.save_wildcards(allfiles=False), wx.SAVE)
+        dlg.SetFilterIndex(self.choice_modules.GetPosition())
         if dlg.ShowModal()==wx.ID_OK:
             self.input_filename.SetValue(dlg.GetFilename())
             self.fname = dlg.GetPath()
+            self.choice_modules.SetPosition(dlg.GetFilterIndex())
         dlg.Destroy()
+    
+    def OnTypeChange(self, event = None):
+        fpath = list(os.path.splitext(self.fname))
+        if len(fpath)>1:
+            fpath[-1] = self.mods[event.GetSelection()]().ext[0][2:]
+            if fpath[0]=="": fpath[0]="default"
+            self.fname = ".".join(fpath)
+            self.input_filename.SetValue(os.path.basename(self.fname))
+        if self.check_autoname.GetValue(): self.fname = ""
     
     def GetValue(self):
         """
@@ -241,4 +296,4 @@ class FileSelectionDialog(wx.Dialog):
                 file name (str), auto name (bool)
         
         """
-        return self.fname, self.check_autoname.GetValue()
+        return self.mods[self.choice_modules.GetCurrentSelection()].__name__, self.fname, self.check_autoname.GetValue()

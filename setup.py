@@ -18,5 +18,5 @@ setup(name='terapy',
       package_data={'terapy':['icons/*.png','icons/*.ico']},
       entry_points={'console_scripts':['terapy = tera:main']},
 	  console=['tera.py'],
-	  install_requires=['wxPython','numpy','scipy','quantities','h5py', 'xlrd', 'xlwt', 'xlutils' ,'statsmodels', 'pyWavelets', 'pandas' ,'PyVISA'],
+	  install_requires=['wxPython','matplotlib','numpy','scipy','quantities','h5py', 'xlrd', 'xlwt', 'xlutils' ,'statsmodels', 'pyWavelets', 'pandas' ,'PyVISA'],
 )
