@@ -26,6 +26,7 @@ from terapy.filters.base import Filter
 from scipy.interpolate import interp1d
 import wx
 from terapy.core import icon_path
+from wx.lib.pubsub import setupkwargs
 from wx.lib.pubsub import pub
  
 class Normalize(Filter):

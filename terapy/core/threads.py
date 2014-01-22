@@ -25,6 +25,7 @@
 import threading
 from time import sleep
 from terapy.core import refresh_delay
+from wx.lib.pubsub import setupkwargs
 from wx.lib.pubsub import pub
 import wx
 

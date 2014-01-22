@@ -28,6 +28,7 @@ import os
 from terapy import files
 from terapy.core.dragdrop import HistoryDrop, HistoryDragObject
 from wx.lib.mixins.listctrl import ListCtrlAutoWidthMixin
+from wx.lib.pubsub import setupkwargs
 from wx.lib.pubsub import pub 
 from terapy.core import icon_path
 from terapy.icons import DataIconList

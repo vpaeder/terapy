@@ -26,8 +26,10 @@
 # imports
 # wx for general GUI
 import wx
+import core
 from terapy.core.splitter import Splitter
 from terapy.core.menus import GetItemIds
+from wx.lib.pubsub import setupkwargs
 from wx.lib.pubsub import pub
 # plotting and data treatment
 from terapy.filters.control import FilterControl

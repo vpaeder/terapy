@@ -35,6 +35,7 @@ from terapy.core import check_py, filter_file
 from terapy.core.parsexml import ParseAttributes
 from terapy.core.dataman import DataArray
 from terapy.core.axedit import AxisInfos
+from wx.lib.pubsub import setupkwargs
 from wx.lib.pubsub import pub
 from xml.dom import minidom
 import wx

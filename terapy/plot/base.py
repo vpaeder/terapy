@@ -24,6 +24,7 @@
 
 import wx
 from terapy.core.axedit import ConvertUnits, FormatUnits
+from wx.lib.pubsub import setupkwargs
 from wx.lib.pubsub import pub
 
 class PlotCanvas(wx.Panel):

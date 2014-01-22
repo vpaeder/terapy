@@ -29,7 +29,9 @@ import wx
 from terapy.core.dataman import DataArray
 from wx.lib.mixins.listctrl import ListCtrlAutoWidthMixin 
 from terapy.core import icon_path
+from terapy.core.plotpanel import PlotPanel
 from terapy.core.dragdrop import FilterDrop, FilterDragObject
+from wx.lib.pubsub import setupkwargs
 from wx.lib.pubsub import pub
 from terapy.filters import GetModules, FilterBank
 import functools
@@ -82,8 +84,7 @@ class FilterControl(wx.Panel):
         
         # window preview
         self.label_plot = wx.StaticText(self, -1, "Apodization window")
-        from terapy.core import plotpanel
-        self.plot_filter = plotpanel.PlotPanel(self, -1)
+        self.plot_filter = PlotPanel(self, -1)
         self.plot_filter.SetMaxSize((150,100))
         self.plot_filter.SetMinSize((150,100))
 

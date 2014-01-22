@@ -24,6 +24,7 @@
 
 from terapy.plot.base import Plot
 from numpy import zeros
+from wx.lib.pubsub import setupkwargs
 from wx.lib.pubsub import pub
 
 class Plot2D(Plot):

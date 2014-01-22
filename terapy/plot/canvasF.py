@@ -25,6 +25,7 @@
 from terapy.plot.canvas1d import PlotCanvas1D
 import wx
 import functools
+from wx.lib.pubsub import setupkwargs
 from wx.lib.pubsub import pub
 from terapy.filters import FilterBank
 from terapy.core.axedit import AxisInfos, du

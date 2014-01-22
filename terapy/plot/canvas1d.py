@@ -24,14 +24,15 @@
 
 from terapy.plot.base import PlotCanvas
 from terapy.plot.plot1d import Plot1D
+from wx.lib.pubsub import setupkwargs
 from wx.lib.pubsub import pub
 from terapy.filters import FilterBank
 from terapy.core.axedit import AxisInfos, ConvertUnits, FormatUnits, du
-from terapy.core import plotpanel
+from terapy.core.plotpanel import PlotPanel
 import matplotlib
 import wx
 
-class PlotCanvas1D(PlotCanvas,plotpanel.PlotPanel):
+class PlotCanvas1D(PlotCanvas,PlotPanel):
     """
     
         Canvas class for 1D plots
@@ -59,7 +60,7 @@ class PlotCanvas1D(PlotCanvas,plotpanel.PlotPanel):
                 yscale    -    ordinate scale type (linear or log)
         
         """
-        plotpanel.PlotPanel.__init__(self,parent,id)
+        PlotPanel.__init__(self,parent,id)
         PlotCanvas.__init__(self,parent,id)
         
         fig = self.get_figure()

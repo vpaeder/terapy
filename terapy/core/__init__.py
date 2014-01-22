@@ -24,6 +24,7 @@
 
 import os
 from xml.dom import minidom
+import plotpanel
 
 # get root path
 root_path = os.path.dirname(os.path.abspath( __file__ ))

@@ -35,6 +35,7 @@ import wx
 import os
 import functools
 from time import sleep
+from wx.lib.pubsub import setupkwargs
 from wx.lib.pubsub import pub
 
 class ScanEventList(wx.Panel):

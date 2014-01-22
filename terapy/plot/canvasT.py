@@ -24,6 +24,7 @@
 
 from terapy.plot.canvas1d import PlotCanvas1D
 import wx
+from wx.lib.pubsub import setupkwargs
 from wx.lib.pubsub import pub
 import functools
 import wxmpl

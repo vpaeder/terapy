@@ -23,15 +23,16 @@
 """
 
 from terapy.plot.base import PlotCanvas
+from wx.lib.pubsub import setupkwargs
 from wx.lib.pubsub import pub
 from matplotlib.colors import LinearSegmentedColormap
 from terapy.plot.plot2d import Plot2D
 from terapy.core.axedit import AxisInfos, FormatUnits, du
-from terapy.core import plotpanel
+from terapy.core.plotpanel import PlotPanel
 import wx
 import matplotlib
 
-class PlotCanvas2D(PlotCanvas,plotpanel.PlotPanel):
+class PlotCanvas2D(PlotCanvas,PlotPanel):
     """
     
         Canvas class for 2D plots
@@ -60,7 +61,7 @@ class PlotCanvas2D(PlotCanvas,plotpanel.PlotPanel):
                 yscale    -    ordinate scale type (linear or log)
         
         """
-        plotpanel.PlotPanel.__init__(self,parent,id)
+        PlotPanel.__init__(self,parent,id)
         PlotCanvas.__init__(self,parent,id)
         
         fig = self.get_figure()
@@ -108,7 +109,7 @@ class PlotCanvas2D(PlotCanvas,plotpanel.PlotPanel):
     
     def Destroy(self):
         PlotCanvas.Destroy(self)
-        plotpanel.PlotPanel.Destroy(self)
+        PlotPanel.Destroy(self)
     
     def OnLeftClick(self, event):
         """

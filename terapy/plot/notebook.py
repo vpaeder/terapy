@@ -26,6 +26,7 @@ import wx
 from terapy.icons import DataIconList
 from terapy.plot import canvas_modules
 from terapy.core.dragdrop import HistoryDrop
+from wx.lib.pubsub import setupkwargs
 from wx.lib.pubsub import pub
 from time import time
 import functools
