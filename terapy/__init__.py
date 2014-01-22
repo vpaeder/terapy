@@ -44,7 +44,7 @@ from terapy.core.history import HistoryControl
 from terapy.core import icon_path
 
 __version__         = "2.00b5 / 20.01.2014"
-__doc_url__         = "http://128.131.79.22/terapy/doc.html"
+__doc_url__         = "http://pythonhosted.org/terapy/doc.html"
 
 class TeraPyMainFrame(wx.Frame):
     def __init__(self):
