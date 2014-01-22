@@ -287,7 +287,9 @@ class ScanEventList(wx.Panel):
             ev.name = event.GetLabel()
         else:
             event.Skip()
-        self.list_events.SelectItem(self.list_events.GetNextSibling(itm))
+        itm = self.list_events.GetNextSibling(itm)
+        if itm.IsOk():
+            self.list_events.SelectItem(itm)
         self.SetFocus()
     
     def OnEventLeftClick(self, event = None):
