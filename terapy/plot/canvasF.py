@@ -25,7 +25,7 @@
 from terapy.plot.canvas1d import PlotCanvas1D
 import wx
 import functools
-from wx.lib.pubsub import Publisher as pub
+from wx.lib.pubsub import pub
 from terapy.filters import FilterBank
 from terapy.core.axedit import AxisInfos, du
 
@@ -132,9 +132,9 @@ class PlotCanvasF(PlotCanvas1D):
         self.Update()
         
         if self.parent.CurrentPage == self:
-            pub.sendMessage("plot.set_filters", self.bank)
+            pub.sendMessage("plot.set_filters", inst=self.bank)
             pub.sendMessage("plot.switch_canvas")
-        pub.sendMessage("filter.change", self.bank)
+        pub.sendMessage("filter.change", inst=self.bank)
     
     def PostProcess(self, inst=None):
         """
@@ -142,15 +142,14 @@ class PlotCanvasF(PlotCanvas1D):
             Post-process displayed data.
             
             Parameters:
-                inst    -    pubsub event data
-                             inst.data should be filter.FilterBank
+                inst    -    pubsub event data (filter.FilterBank)
         
         """
-        if inst.data == self.bank:
+        if inst == self.bank:
             self.bank.RecomputeReference()
             for x in self.plots:
                 x.SetData(self.bank.ApplyFilters(x.source.array))
             self.Update()
             if len(self.children)>0:
-                inst.data = self.children[-1].bank
+                inst = self.children[-1].bank
                 self.children[-1].PostProcess(inst)

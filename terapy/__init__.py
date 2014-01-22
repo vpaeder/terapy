@@ -28,7 +28,7 @@
 import wx
 from terapy.core.splitter import Splitter
 from terapy.core.menus import GetItemIds
-from wx.lib.pubsub import Publisher as pub
+from wx.lib.pubsub import pub
 # plotting and data treatment
 from terapy.filters.control import FilterControl
 from terapy.plot.notebook import PlotNotebook
@@ -44,7 +44,7 @@ from terapy.core.history import HistoryControl
 from terapy.core import icon_path
 
 __version__         = "2.00b5 / 20.01.2014"
-__doc_url__         = "http://128.131.79.22/terapy/doc.html"
+__doc_url__         = "http://pythonhosted.org/terapy/doc.html"
 
 class TeraPyMainFrame(wx.Frame):
     def __init__(self):
@@ -65,7 +65,7 @@ class TeraPyMainFrame(wx.Frame):
         # statusbar
         self.CreateStatusBar(2)
         self.SetStatusWidths([-1, 180])
-        wx.CallAfter(pub.sendMessage,"set_status_text","Welcome to TeraPy")
+        wx.CallAfter(pub.sendMessage,"set_status_text",inst="Welcome to TeraPy")
         
         # restore device informations
         hardware.restore_hardware_info()
@@ -318,13 +318,13 @@ class TeraPyMainFrame(wx.Frame):
         
         # attach main sizer to panel to adjust element sizes
         self.panel.SetAutoLayout(True)
-        self.panel.SetSizer(hbox0)
+        self.panel.SetSizerAndFit(hbox0)
         hbox0.Fit(self.panel)
         hbox0.SetSizeHints(self.panel)
         
         self.Fit()
         self.Maximize()
-    
+        
     def SetStatusText(self, inst=None):
         """
         
@@ -340,7 +340,7 @@ class TeraPyMainFrame(wx.Frame):
         else:
             wx.Frame.SetStatusText(self,inst.data)
             
-    def SetRefresh(self, inst):
+    def SetRefresh(self, inst = None):
         """
         
             Report on the state of the "automatic update" checkbox through pubsub.
@@ -350,18 +350,18 @@ class TeraPyMainFrame(wx.Frame):
         
         """
         # needed to report auto update flag
-        pub.sendMessage("broadcast_refresh",data=self.auto_update.GetValue())
+        pub.sendMessage("broadcast_refresh",inst=self.auto_update.GetValue())
     
-    def OnStartMeasurement(self, event=None):
+    def OnStartMeasurement(self, inst=None):
         """
         
             Actions preceding a new measurement.
             
             Parameters:
-                event    -    event object (wx.Event)
+                inst    -    pubsub data (Measurement)
         
         """
-        meas = event.data
+        meas = inst
         # disable controls
         self.ToggleScanControls(False)
         # stop axis/input display update
@@ -379,20 +379,20 @@ class TeraPyMainFrame(wx.Frame):
                 meas.data[n].xml = meas.xml # copy xml tree for easier access
         
         # set status bar
-        pub.sendMessage("set_status_text","Scan sequence \""+meas.name+"\" started at " + strftime("%H:%M:%S", localtime()))
+        pub.sendMessage("set_status_text",inst="Scan sequence \""+meas.name+"\" started at " + strftime("%H:%M:%S", localtime()))
         self.is_scanning = True
         
     
-    def SetProgressValue(self, event):
+    def SetProgressValue(self, inst):
         """
         
             Set progress bar value from pubsub event.
             
             Parameters:
-                event    -    event object (wx.Event)
+                inst    -    pubsub data (float)
         
         """
-        value = event.data
+        value = inst
         if value < 0:
             value = 0
         if value > 100:
@@ -533,21 +533,21 @@ class TeraPyMainFrame(wx.Frame):
         for x in self.device_widgets:
             x.Enable(state)
         
-    def OnStopMeasurement(self, event = None):
+    def OnStopMeasurement(self, inst = None):
         """
         
             Actions following the end of a measurement.
             
             Parameters:
-                event    -    event object (wx.Event)
+                inst    -    pubsub data (Measurement)
         
         """
-        meas = event.data
+        meas = inst
         # swap buttons' status
         self.ToggleScanControls(True)
         
         # status bar
-        pub.sendMessage("set_status_text","Scan finished")
+        pub.sendMessage("set_status_text",inst="Scan finished")
         
         # update plots
         for x in meas.data:
@@ -691,7 +691,7 @@ class TeraPyMainFrame(wx.Frame):
                 inst    -    pubsub event data (not used, but function normally called by pubsub)
         
         """
-        pub.sendMessage("broadcast_window", data=self)
+        pub.sendMessage("broadcast_window", inst=self)
 
 # launch application
 if __name__ == '__main__':

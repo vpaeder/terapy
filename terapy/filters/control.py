@@ -23,7 +23,6 @@
 """
 
 import numpy as np
-import wxmpl
 from pylab import Line2D
 import os
 import wx
@@ -31,7 +30,7 @@ from terapy.core.dataman import DataArray
 from wx.lib.mixins.listctrl import ListCtrlAutoWidthMixin 
 from terapy.core import icon_path
 from terapy.core.dragdrop import FilterDrop, FilterDragObject
-from wx.lib.pubsub import Publisher as pub
+from wx.lib.pubsub import pub
 from terapy.filters import GetModules, FilterBank
 import functools
 
@@ -68,6 +67,8 @@ class FilterControl(wx.Panel):
         
         # filter list
         self.list = FilterList(self, -1, style=wx.LC_REPORT|wx.LC_NO_HEADER)
+        self.list.SetMaxSize((200,-1))
+        
         self.list.InsertColumn(0,"Name")
         self.img_list = wx.ImageList(16,16)
         from terapy.core.tooltip import ToolTip
@@ -81,7 +82,8 @@ class FilterControl(wx.Panel):
         
         # window preview
         self.label_plot = wx.StaticText(self, -1, "Apodization window")
-        self.plot_filter = wxmpl.PlotPanel(self, -1)
+        from terapy.core import plotpanel
+        self.plot_filter = plotpanel.PlotPanel(self, -1)
         self.plot_filter.SetMaxSize((150,100))
         self.plot_filter.SetMinSize((150,100))
 
@@ -154,11 +156,11 @@ class FilterControl(wx.Panel):
             Refresh displayed filter list.
             
             Parameters:
-                inst    -    pubsub event data
+                inst    -    pubsub event data (FilterBank)
         
         """
         if inst!=None:
-            if inst.data!=self.bank: return
+            if inst!=self.bank: return
         # store currently selected items
         sels = []
         itm = self.list.GetFirstSelected()
@@ -190,11 +192,10 @@ class FilterControl(wx.Panel):
             Set filter bank through pubsub.
             
             Parameters:
-                inst    -    pubsub event data
-                             inst.data must be of class FilterBank
+                inst    -    pubsub event data (FilterBank)
         
         """
-        self.bank = inst.data
+        self.bank = inst
         self.RefreshFilters()
     
     def EnableControl(self, inst):
@@ -203,11 +204,10 @@ class FilterControl(wx.Panel):
             Set control to given state (through pubsub)
             
             Parameters:
-                inst    -    pubsub event data
-                             inst.data must be boolean
+                inst    -    pubsub event data (bool)
         
         """
-        self.Enable(inst.data)
+        self.Enable(inst)
     
     def LoadFilterList(self, event=None, fname=""):
         """
@@ -263,7 +263,7 @@ class FilterControl(wx.Panel):
         self.bank.RecomputeReference()
         for x in self.bank.children:
             x.RecomputeReference()
-        pub.sendMessage("filter.change", self.bank)
+        pub.sendMessage("filter.change", inst=self.bank)
     
     def OnFilterLeftClick(self, event = None):
         """
@@ -439,7 +439,7 @@ class FilterControl(wx.Panel):
             ft = self.bank.filters.pop(pos)
             self.list.DeleteItem(pos)
             if ft.is_reference:
-                pub.sendMessage("filter.clear_reference", ft.source) # send clear reference message with ref array
+                pub.sendMessage("filter.clear_reference", inst=ft.source) # send clear reference message with ref array
         if len(sels)>0:
             # update display
             self.UpdateFilterDisplay()

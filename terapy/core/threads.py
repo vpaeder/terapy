@@ -25,7 +25,7 @@
 import threading
 from time import sleep
 from terapy.core import refresh_delay
-from wx.lib.pubsub import Publisher as pub
+from wx.lib.pubsub import pub
 import wx
 
 class ScanThread(threading.Thread):
@@ -67,7 +67,7 @@ class ScanThread(threading.Thread):
         pthread = None
         
         # announce measurement end
-        wx.CallAfter(pub.sendMessage, "scan.after", data=self.meas)
+        wx.CallAfter(pub.sendMessage, "scan.after", inst=self.meas)
     
 class ProgressThread(threading.Thread):
     """
@@ -108,7 +108,7 @@ class ProgressThread(threading.Thread):
         """
         while self.can_run:
             sleep(refresh_delay)
-            wx.CallAfter(pub.sendMessage,"progress_change",data=self.progress())
+            wx.CallAfter(pub.sendMessage,"progress_change",inst=self.progress())
     
     def stop(self,inst=None):
         """
@@ -117,7 +117,6 @@ class ProgressThread(threading.Thread):
             
             Parameters:
                 inst    -    pubsub event data
-                             inst.data must be boolean
         
         """
         self.can_run = False

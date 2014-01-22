@@ -24,7 +24,7 @@
 
 from terapy.plot.base import Plot
 from matplotlib.lines import Line2D
-from wx.lib.pubsub import Publisher as pub
+from wx.lib.pubsub import pub
 
 class Plot1D(Plot):
     """

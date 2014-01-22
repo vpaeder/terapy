@@ -35,7 +35,7 @@ from terapy.core import check_py, filter_file
 from terapy.core.parsexml import ParseAttributes
 from terapy.core.dataman import DataArray
 from terapy.core.axedit import AxisInfos
-from wx.lib.pubsub import Publisher as pub
+from wx.lib.pubsub import pub
 from xml.dom import minidom
 import wx
 
@@ -225,7 +225,7 @@ class FilterBank():
         self.filters.insert(pos,ft)
         if ft.is_reference:
             self.RecomputeReference()
-        pub.sendMessage("filter.change", self)
+        pub.sendMessage("filter.change", inst=self)
     
     def AppendFilter(self, ft):
         """
@@ -248,7 +248,7 @@ class FilterBank():
         
         """
         self.filters.pop(pos)
-        pub.sendMessage("filter.change", self)
+        pub.sendMessage("filter.change", inst=self)
     
     def __del__(self):
         """
@@ -292,8 +292,7 @@ class FilterBank():
             
             Parameters:
                 inst    -    array (DataArray)
-                             or pubsub event data
-                             inst.data must be DataArray
+                             or pubsub event data (DataArray)
         
         """
         if not(isinstance(inst,DataArray)):
@@ -320,7 +319,7 @@ class FilterBank():
                 ft.ref = narray
                 ft.source = array
                 if inst!=array:
-                    pub.sendMessage("filter.change", data=self) # send filter change notification with filter bank as object
+                    pub.sendMessage("filter.change", inst=self) # send filter change notification with filter bank as object
                 break
     
     def RecomputeReference(self):
@@ -344,14 +343,14 @@ class FilterBank():
         
         """
         # search for reference filter, remove if exist
-        if self in inst.data:
+        if self in inst:
             for n in range(len(self.filters)):
                 if self.filters[n].is_reference:
                     ft = self.filters.pop(n)
                     # recompute reference in children if one exists
                     for x in self.children:
                         x.RecomputeReference()
-                    pub.sendMessage("filter.change", data=self)
+                    pub.sendMessage("filter.change", inst=self)
                     return ft
             return None 
 

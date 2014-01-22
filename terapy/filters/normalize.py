@@ -26,7 +26,7 @@ from terapy.filters.base import Filter
 from scipy.interpolate import interp1d
 import wx
 from terapy.core import icon_path
-from wx.lib.pubsub import Publisher as pub
+from wx.lib.pubsub import pub
  
 class Normalize(Filter):
     """
@@ -74,7 +74,7 @@ class Normalize(Filter):
                 self.imethod = imethod
                 dlg.Destroy()
                 self.source = reflist[idp]
-                pub.sendMessage("filter.change_reference",data=self.arrays.index(self.source))
+                pub.sendMessage("filter.change_reference",inst=self.arrays.index(self.source))
                 return True
             else:
                 dlg.Destroy()
@@ -85,7 +85,7 @@ class Normalize(Filter):
     
     def set_arrays(self, inst):
         # needed to pick up possible reference data arrays
-        self.arrays = inst.data
+        self.arrays = inst
     
     def get_icon(self):
         return wx.Image(icon_path + "filter-normalize.png").ConvertToBitmap()

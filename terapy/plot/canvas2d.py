@@ -23,15 +23,15 @@
 """
 
 from terapy.plot.base import PlotCanvas
-from wx.lib.pubsub import Publisher as pub
+from wx.lib.pubsub import pub
 from matplotlib.colors import LinearSegmentedColormap
 from terapy.plot.plot2d import Plot2D
 from terapy.core.axedit import AxisInfos, FormatUnits, du
-import wxmpl
+from terapy.core import plotpanel
 import wx
 import matplotlib
 
-class PlotCanvas2D(PlotCanvas,wxmpl.PlotPanel):
+class PlotCanvas2D(PlotCanvas,plotpanel.PlotPanel):
     """
     
         Canvas class for 2D plots
@@ -60,7 +60,7 @@ class PlotCanvas2D(PlotCanvas,wxmpl.PlotPanel):
                 yscale    -    ordinate scale type (linear or log)
         
         """
-        wxmpl.PlotPanel.__init__(self,parent,id)
+        plotpanel.PlotPanel.__init__(self,parent,id)
         PlotCanvas.__init__(self,parent,id)
         
         fig = self.get_figure()
@@ -108,7 +108,7 @@ class PlotCanvas2D(PlotCanvas,wxmpl.PlotPanel):
     
     def Destroy(self):
         PlotCanvas.Destroy(self)
-        wxmpl.PlotPanel.Destroy(self)
+        plotpanel.PlotPanel.Destroy(self)
     
     def OnLeftClick(self, event):
         """
@@ -211,7 +211,7 @@ class PlotCanvas2D(PlotCanvas,wxmpl.PlotPanel):
                 plt = self.plots.pop()
                 plt.Delete()
             if len(self.plots)==0:
-                pub.sendMessage("plot.empty_page", data=self)
+                pub.sendMessage("plot.empty_page", inst=self)
     
     def PopupMenuItems(self,menu):
         """

@@ -24,14 +24,14 @@
 
 from terapy.plot.base import PlotCanvas
 from terapy.plot.plot1d import Plot1D
-from wx.lib.pubsub import Publisher as pub
+from wx.lib.pubsub import pub
 from terapy.filters import FilterBank
 from terapy.core.axedit import AxisInfos, ConvertUnits, FormatUnits, du
-import wxmpl
+from terapy.core import plotpanel
 import matplotlib
 import wx
 
-class PlotCanvas1D(PlotCanvas,wxmpl.PlotPanel):
+class PlotCanvas1D(PlotCanvas,plotpanel.PlotPanel):
     """
     
         Canvas class for 1D plots
@@ -59,7 +59,7 @@ class PlotCanvas1D(PlotCanvas,wxmpl.PlotPanel):
                 yscale    -    ordinate scale type (linear or log)
         
         """
-        wxmpl.PlotPanel.__init__(self,parent,id)
+        plotpanel.PlotPanel.__init__(self,parent,id)
         PlotCanvas.__init__(self,parent,id)
         
         fig = self.get_figure()
@@ -243,7 +243,7 @@ class PlotCanvas1D(PlotCanvas,wxmpl.PlotPanel):
             x.children = []
         if self.source!=None:
             self.source.children.pop(self.source.children.index(self))
-        pub.sendMessage("plot.empty_page", data=self)
+        pub.sendMessage("plot.empty_page", inst=self)
     
     def SetPlotColors(self):
         """

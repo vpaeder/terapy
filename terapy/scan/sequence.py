@@ -25,7 +25,7 @@
 from terapy.scan.base import ScanEvent
 import wx
 from terapy.core import icon_path
-from wx.lib.pubsub import Publisher as pub
+from wx.lib.pubsub import pub
 
 class Sequence(ScanEvent):
     """

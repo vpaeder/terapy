@@ -39,7 +39,7 @@ class AxisDevice(Device):
         self.timerStart = 0 
         self.intervalTimerStart = 0
         self.qtynames = "Time"
-        self.units = "s"
+        self.units = "ps"
         self.interval = 0.01
         self.config = ["interval"]
     
