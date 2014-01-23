@@ -560,14 +560,14 @@ class TeraPyMainFrame(wx.Frame):
         self.StartDeviceTimer()
         self.is_scanning = False
     
-    def SetAxisFromPlot(self, event):
+    def SetAxisFromPlot(self, inst):
         """
         
             Set currently selected axis device to given position.
             This function is meant to be called by pubsub.
             
             Parameters:
-                event    -    event object (wx.Event)
+                inst    -    pubsub event
         
         """
         # set selected stage position
@@ -575,7 +575,7 @@ class TeraPyMainFrame(wx.Frame):
             if self.nb_widgets!=None:
                 curwg = self.nb_widgets.CurrentPage
                 if hasattr(curwg,'axis'):
-                    curwg.SetValue(event.data)
+                    curwg.SetValue(inst)
         
     def UpdateHardware(self):
         """
