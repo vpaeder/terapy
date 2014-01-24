@@ -474,21 +474,20 @@ class FilterControl(wx.Panel):
         self.UpdateFilterDisplay()
         self.OnFilterUpdate()
     
-    def SetReference(self, array):
+    def SetReference(self, inst):
         """
         
             Set given array as reference.
              
             Parameters:
-                array    -    data array (DataArray)
+                inst    -    data array (DataArray)
                               or pubsub event data
-                              (array.data must be of class DataArray)
         
         """
         # set reference from external source (i.e. not from filter control itself)
         # will act on currently displayed filter bank
-        if not(isinstance(array,DataArray)):
-            array = array.data
+        if not(isinstance(inst,DataArray)):
+            inst = inst.data
         
         # search for existing reference
         ref_ft = None
@@ -503,11 +502,11 @@ class FilterControl(wx.Panel):
             for n in range(len(modules)):
                 ft = modules[n]()
                 if ft.is_reference:
-                    ft.source = array
+                    ft.source = inst
                     self.bank.AppendFilter(ft)
                     break
         else:
-            ref_ft.source = array
+            ref_ft.source = inst
         
     def RemoveReference(self, inst=None):
         """

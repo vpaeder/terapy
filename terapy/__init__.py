@@ -26,7 +26,7 @@
 # imports
 # wx for general GUI
 import wx
-import core
+import core, files, filters, hardware, icons, plot, scan
 from terapy.core.splitter import Splitter
 from terapy.core.menus import GetItemIds
 from wx.lib.pubsub import setupkwargs
@@ -45,7 +45,7 @@ from terapy.scan.control import ScanEventList
 from terapy.core.history import HistoryControl
 from terapy.core import icon_path
 
-__version__         = "2.00b5 / 20.01.2014"
+__version__         = "2.00b6 / 24.01.2014"
 __doc_url__         = "http://pythonhosted.org/terapy/doc.html"
 
 class TeraPyMainFrame(wx.Frame):

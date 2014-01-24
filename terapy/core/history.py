@@ -571,7 +571,7 @@ class HistoryControl(wx.Panel):
             # if array has a xml image of event tree, propose reload
             if hasattr(arr,'xml'):
                 itm = menu.Append(wx.NewId(),"Reload event tree")
-                self.Bind(wx.EVT_MENU, lambda x: pub.sendMessage("history.reload_events", inst=arr.xml), id=itm.Id)
+                self.Bind(wx.EVT_MENU, lambda x: pub.sendMessage("history.reload_events", string=arr.xml), id=itm.Id)
             # specific menu entries for 1D plot
             if len(arr.shape) == 1:
                 itm = menu.Append(wx.NewId(), "Change c&olor")
@@ -682,29 +682,28 @@ class HistoryControl(wx.Panel):
         # return modified name
         return name
     
-    def SetReference(self, position):
+    def SetReference(self, inst):
         """
         
             Set selected item as reference.
             
             Parameters:
-                position    -    item position (int)
+                inst    -    item position (int)
+                             or pubsub data (DataArray)
         
         """
-        if not(isinstance(position,int)):
-            if isinstance(position.data,DataArray):
+        if not(isinstance(inst,int)):
+            if isinstance(inst,DataArray):
                 for n in range(self.list.GetItemCount()):
                     arr = self.list.GetItemPyData(n)
-                    if arr == position.data:
+                    if arr == inst:
                         position = n
                         break
-            else:
-                position = position.data
             message = 'history.change_reference'
         else:
             message = 'history.set_reference'
-        self.TagAsReference(position)
-        arr = self.list.GetItemPyData(position)
+        self.TagAsReference(inst)
+        arr = self.list.GetItemPyData(inst)
         pub.sendMessage(message, inst=arr)
     
     def TagAsReference(self, position, state=True):
@@ -734,21 +733,21 @@ class HistoryControl(wx.Panel):
             self.list.ClearReference(position)
             self.list.SetItemImage(position,1)
     
-    def ClearReference(self, event=None):
+    def ClearReference(self, inst=None):
         """
         
             Clear reference status of selected item.
              
             Parameters:
-                event    -    wx.Event
+                inst    -    wx.Event or pubsub data (DataArray)
         
         """
-        if isinstance(event,wx.Event): # action came from menu
+        if isinstance(inst,wx.Event): # action came from menu
             idp = self.list.GetFirstSelected()
         else: # action came from external source through pubsub
             idp = -1
             for n in range(self.list.GetItemCount()):
-                if self.list.GetItemPyData(n) == event.data:
+                if self.list.GetItemPyData(n) == inst:
                     idp = n
                     break
         if idp>-1:
