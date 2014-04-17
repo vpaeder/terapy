@@ -136,6 +136,7 @@ class ReadEventDialog(wx.Dialog):
         self.button_Cancel = wx.Button(self, wx.ID_CANCEL)
         self.choice_input.SetSelection(value)
         self.choice_index.SetSelection(index)
+        self.Bind(wx.EVT_CHOICE, self.OnInputSelect, self.choice_input)
         
         hbox = wx.BoxSizer(wx.HORIZONTAL)
         hbox.AddStretchSpacer(1)
@@ -149,7 +150,22 @@ class ReadEventDialog(wx.Dialog):
         sizer.Add(hbox, 0, wx.ALL|wx.EXPAND, 2)
         self.SetSizer(sizer)
         self.Fit()
+        
+        self.inlist = inlist
     
+    def OnInputSelect(self, event=None):
+        """
+        
+            Actions following change of input device.
+        
+        """
+        input = self.choice_input.GetSelection()
+        index = self.choice_index.GetSelection()
+        self.choice_index.Clear()
+        self.choice_index.AppendItems(self.inlist[input].qtynames)
+        if index>=len(self.inlist[input].qtynames): index = len(self.inlist[input].qtynames)-1 
+        self.choice_index.SetSelection(index)
+
     def GetValue(self):
         """
         
