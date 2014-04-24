@@ -221,7 +221,7 @@ class AxisWidget(wx.ScrolledWindow):
 		self.min = min
 		self.max = max
 		self.qtyname = qtyname[0].lower() + qtyname[1:]
-		self.timer = wx.Timer()
+		self.timer = AxisWidgetUpdateThread(self)
 		
 		self.SetScrollbars(1,1,1,1)
 		self.label_position = wx.StaticText(self,-1,pos + " " + units)
@@ -283,7 +283,6 @@ class AxisWidget(wx.ScrolledWindow):
 				val	-	value to display (float)
 		
 		"""
-
 		self.label_position.SetLabel(("%3.2f" % val) + " " + self.units)
 		
 	def SetValue(self, val):
@@ -308,10 +307,7 @@ class AxisWidget(wx.ScrolledWindow):
 		
 		"""
 		self.OnSet(event)
-		try:
-			self.axis.goTo(float(self.input_position.Value))
-		except:
-			pass
+		self.timer.move(float(self.input_position.Value))
 		if event!=None:
 			event.Skip()
 	
@@ -396,13 +392,33 @@ class AxisWidget(wx.ScrolledWindow):
 
 class AxisWidgetUpdateThread(WidgetUpdateThread):
 	def __init__(self,widget):
+		self.must_move = False
+		self.pos = 0.0
 		WidgetUpdateThread.__init__(self,widget)
 	
 	def read(self):
 		try:
-			pos = self.axis.pos()
+			pos = self.widget.axis.pos()
 		except:
 			pos = 0
 		
 		return pos
-
+	
+	def move(self, pos):
+		self.pos = pos
+		self.must_move = True
+	
+	def run(self):
+		while self.can_run:
+			if self.need_display and self.can_run:
+				val = self.read()
+				wx.CallAfter(self.widget.RefreshDisplay,val)
+			if self.must_move and self.can_run:
+				self.widget.axis.stop()
+				self.widget.axis.goTo(self.pos)
+				self.must_move = False
+			
+			sleep(self.delay/1000.0)
+			
+	def stop(self):
+		self.can_run = False

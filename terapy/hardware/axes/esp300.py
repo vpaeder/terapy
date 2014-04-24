@@ -94,8 +94,8 @@ class ESP300(AxisDevice):
         units = position / self.psperunit
         self.write("PA" + str(units))
         if(wait == True):
-            while(self.get_motion_status() != 0 ):
-                sleep(0.10)
+            while(self.get_motion_status() != 0):
+                sleep(0.1)
         
     def jog(self, step):
         if(self.get_motion_status() != 0):

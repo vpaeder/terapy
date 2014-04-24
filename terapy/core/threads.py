@@ -129,28 +129,26 @@ class WidgetUpdateThread(threading.Thread):
 			Initialization.
 			
 			Parameters:
-				meas	  -	measurement container (Measurement)
+				widget	  -	widget, which must be updated (wx.Window with RefreshDisplay function) 
 		
 		"""
 		threading.Thread.__init__(self)
 		self.widget = widget
-	
-	def Start(self, delay):
-		self.delay = delay
+		self.delay = 250.0
+		self.can_run = True
+		self.need_display = False
 		self.start()
 	
 	def read(self):
 		return 0.0
 	
 	def run(self):
-		self.can_run = True
 		while self.can_run:
 			sleep(self.delay/1000.0)
-			val = self.read()
 			
-			if self.can_run:
+			if self.need_display:
+				val = self.read()
 				wx.CallAfter(self.widget.RefreshDisplay,val)
 	
-	def Stop(self):
+	def stop(self):
 		self.can_run = False
-	

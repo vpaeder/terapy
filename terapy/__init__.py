@@ -144,9 +144,9 @@ class TeraPyMainFrame(wx.Frame):
         if len(self.device_widgets)>0:
             # create splitter window and widget notebook
             self.split_window = Splitter(self.panel,-1,style=wx.SP_LIVE_UPDATE,proportion=0.85)
-            #self.nb_widgets = wx.Notebook(self.split_window,-1,style=0)
             self.nb_widgets = aui.AuiNotebook(self.split_window,style=aui.AUI_NB_TAB_SPLIT|aui.AUI_NB_TAB_MOVE|aui.AUI_NB_BOTTOM)
-            self.nb_widgets.SetArtProvider(aui.AuiSimpleTabArt())
+            ap = aui.AuiSimpleTabArt()
+            self.nb_widgets.SetArtProvider(ap)
             mgr = self.nb_widgets.GetAuiManager()
             mgr.SetFlags(aui.AUI_MGR_ALLOW_ACTIVE_PANE|aui.AUI_MGR_DEFAULT)
             # replace plot notebook with splitter window in containing sizer
@@ -161,10 +161,6 @@ class TeraPyMainFrame(wx.Frame):
             for x in self.device_widgets:
                 x.Reparent(self.nb_widgets)
                 self.nb_widgets.AddPage(x,x.title)
-            for pg in mgr.GetAllPanes():
-                pg.TopDockable(False) 
-                pg.BottomDockable(False)
-            # try to load saved state
         else:
             self.split_window = None
             self.nb_widgets = None
@@ -172,10 +168,10 @@ class TeraPyMainFrame(wx.Frame):
         if self.panel.GetSizer()!=None:
             self.panel.SetSizerAndFit(self.panel.GetSizer())
         
-        if 'mgr' in locals():
-            cfg = wx.Config("TeraPy")
-            if cfg.Exists("Widgets"):
-                wx.CallAfter(mgr.LoadPerspective,cfg.Read("Widgets"))
+        #if 'mgr' in locals():
+        #    cfg = wx.Config("TeraPy")
+        #    if cfg.Exists("Widgets"):
+        #        wx.CallAfter(mgr.LoadPerspective,cfg.Read("Widgets"))
         
     def __create_event_bindings(self):
         """
@@ -435,7 +431,7 @@ class TeraPyMainFrame(wx.Frame):
                 event    -    event object (wx.Event)
         
         """
-        self.StopDeviceTimer()
+        self.StopDeviceTimer(destroy=True)
         # store widget positions
         if hasattr(self,'nb_widgets'):
             if self.nb_widgets!=None:
@@ -594,7 +590,8 @@ class TeraPyMainFrame(wx.Frame):
         # set selected stage position
         if hasattr(self,'nb_widgets'):
             if self.nb_widgets!=None:
-                curwg = self.nb_widgets.CurrentPage
+                # in wxPython 3, AUINotebook has a CurrentPage attribute, but not in wxPython 2
+                curwg = self.nb_widgets.GetPage(self.nb_widgets.GetSelection())
                 if hasattr(curwg,'axis'):
                     curwg.SetValue(inst)
         
@@ -696,16 +693,18 @@ class TeraPyMainFrame(wx.Frame):
         
         """
         for x in self.device_widgets:
-            x.timer.Start(250)
+            x.timer.need_display = True
         
-    def StopDeviceTimer(self):
+    def StopDeviceTimer(self,destroy=False):
         """
         
         Stop update timers for loaded devices
         
         """
         for x in self.device_widgets:
-            x.timer.Stop()
+            x.timer.need_display = False
+            if destroy:
+                x.timer.stop()
     
     def BroadcastWindow(self, inst=None):
         """
