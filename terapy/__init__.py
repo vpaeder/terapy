@@ -26,6 +26,7 @@
 # imports
 # wx for general GUI
 import wx
+from wx import aui
 import core, files, filters, hardware, icons, plot, scan
 from terapy.core.splitter import Splitter
 from terapy.core.menus import GetItemIds
@@ -143,7 +144,11 @@ class TeraPyMainFrame(wx.Frame):
         if len(self.device_widgets)>0:
             # create splitter window and widget notebook
             self.split_window = Splitter(self.panel,-1,style=wx.SP_LIVE_UPDATE,proportion=0.85)
-            self.nb_widgets = wx.Notebook(self.split_window,-1,style=0)
+            #self.nb_widgets = wx.Notebook(self.split_window,-1,style=0)
+            self.nb_widgets = aui.AuiNotebook(self.split_window,style=aui.AUI_NB_TAB_SPLIT|aui.AUI_NB_TAB_MOVE|aui.AUI_NB_BOTTOM)
+            self.nb_widgets.SetArtProvider(aui.AuiSimpleTabArt())
+            mgr = self.nb_widgets.GetAuiManager()
+            mgr.SetFlags(aui.AUI_MGR_ALLOW_ACTIVE_PANE|aui.AUI_MGR_DEFAULT)
             # replace plot notebook with splitter window in containing sizer
             sizer = self.notebook.Parent.GetSizer()
             if sizer!=None:
@@ -156,12 +161,21 @@ class TeraPyMainFrame(wx.Frame):
             for x in self.device_widgets:
                 x.Reparent(self.nb_widgets)
                 self.nb_widgets.AddPage(x,x.title)
+            for pg in mgr.GetAllPanes():
+                pg.TopDockable(False) 
+                pg.BottomDockable(False)
+            # try to load saved state
         else:
             self.split_window = None
             self.nb_widgets = None
         # refresh interface
         if self.panel.GetSizer()!=None:
             self.panel.SetSizerAndFit(self.panel.GetSizer())
+        
+        if 'mgr' in locals():
+            cfg = wx.Config("TeraPy")
+            if cfg.Exists("Widgets"):
+                wx.CallAfter(mgr.LoadPerspective,cfg.Read("Widgets"))
         
     def __create_event_bindings(self):
         """
@@ -305,7 +319,7 @@ class TeraPyMainFrame(wx.Frame):
         # top level sizers
         hbox0 = wx.BoxSizer(wx.HORIZONTAL)
         hbox0.Add(vbox0, 0, wx.EXPAND|wx.ALL, 2) # x|o|o
-        if self.split_window !=None:
+        if self.split_window !=None: # when device widgets are present
             hbox0.Add(self.split_window,1,wx.EXPAND) # o|x|o
         else:  
             hbox0.Add(self.notebook, 1, wx.EXPAND) # o|x|o
@@ -422,6 +436,13 @@ class TeraPyMainFrame(wx.Frame):
         
         """
         self.StopDeviceTimer()
+        # store widget positions
+        if hasattr(self,'nb_widgets'):
+            if self.nb_widgets!=None:
+                cfg = wx.Config("TeraPy")
+                mgr = self.nb_widgets.GetAuiManager()
+                cfg.Write("Widgets",mgr.SavePerspective())
+        
         # stop scan thread
         if not(self.is_scanning):
             pub.unsubAll()
@@ -635,7 +656,8 @@ class TeraPyMainFrame(wx.Frame):
                 event    -    event object (wx.Event)
         
         """
-        mId = GetItemIds(event.GetEventObject()).index(event.GetId())
+        menuItem = self.menuBar.FindItemById(event.GetId())
+        mId = GetItemIds(menuItem.GetMenu()).index(event.GetId())
         self.StopDeviceTimer()                        # stop signal refresh        
         hardware.devices["input"][mId].configure()
         hardware.store_hardware_info()
@@ -651,7 +673,8 @@ class TeraPyMainFrame(wx.Frame):
                 event    -    event object (wx.Event)
         
         """
-        mId = GetItemIds(event.GetEventObject()).index(event.GetId())
+        menuItem = self.menuBar.FindItemById(event.GetId())
+        mId = GetItemIds(menuItem.GetMenu()).index(event.GetId())
         self.StopDeviceTimer()                        # stop signal refresh        
         hardware.devices["axis"][mId].configure()
         hardware.store_hardware_info()

@@ -46,7 +46,7 @@ class Sequence(ScanEvent):
         itmlist = self.get_children()
         for x in itmlist:
             if self.can_run:
-                ev = self.host.GetItemData(x).GetData()
+                ev = self.host.GetItemPyData(x)
                 if ev.is_active:
                     if ev.is_display or ev.is_save:
                         ev.run(data)

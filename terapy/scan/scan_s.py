@@ -217,6 +217,15 @@ class LoopSettingsDialog(wx.Dialog):
         self.input_N.Bind(wx.EVT_KILL_FOCUS, lambda x: self.OnValueChange(2,x), self.input_N)
         self.input_dv.Bind(wx.EVT_KILL_FOCUS, lambda x: self.OnValueChange(3,x), self.input_dv)
     
+        self.Bind(wx.EVT_BUTTON, self.OnOkButton, self.button_OK)
+        self.Bind(wx.EVT_BUTTON, self.OnCancelButton, self.button_Cancel)
+    
+    def OnOkButton(self, event=None):
+        wx.CallAfter(self.EndModal,wx.ID_OK)
+
+    def OnCancelButton(self, event=None):
+        wx.CallAfter(self.EndModal,wx.ID_CANCEL)
+
     def OnValueChange(self, pos, event=None):
         """
         

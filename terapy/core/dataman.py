@@ -347,6 +347,7 @@ class DataArray():
         self.shape = shape # shape of data array
         self.coords = [] # coordinates along each axis
         self.data = np.zeros(shape)*np.nan # data
+        self.source = None # source array (if this array is post-processed from another one)
         self.idx = np.array(map(int,np.zeros(len(shape)))) # current index
         self.plot = None # where the data is plotted
         self.color = None # plot color

@@ -499,12 +499,21 @@ class FilterControl(wx.Panel):
         # if no reference, search for adequate filter and add to filter list
         if ref_ft==None:
             modules = GetModules(self.dim)
+            # build list of potential filters
+            flist = []
             for n in range(len(modules)):
                 ft = modules[n]()
                 if ft.is_reference:
-                    ft.source = inst
-                    self.bank.AppendFilter(ft)
-                    break
+                    flist.append(ft)
+            if len(flist)==1: # if only one type exists, add this one
+                flist[0].source = inst
+                self.bank.AppendFilter(flist[0])
+            elif len(flist)>1: # otherwise, propose a list to the user
+                dlg = ReferenceFilterSelectionDialog(flist = flist)
+                if dlg.ShowModal() == wx.ID_OK:
+                    idx = dlg.GetValue()
+                    flist[idx].source = inst
+                    self.bank.AppendFilter(flist[idx])
         else:
             ref_ft.source = inst
         
@@ -545,3 +554,25 @@ class FilterControl(wx.Panel):
         data_y = np.concatenate(([0.0,0.0], arr.data, [0.0,0.0]))
         self.line_filter.set_data(data_x, data_y)
         self.plot_filter.draw()
+
+class ReferenceFilterSelectionDialog(wx.Dialog):
+    def __init__(self, parent = None, title="Reference filter", flist = []):
+        wx.Dialog.__init__(self, parent, title=title)
+        self.label_flist = wx.StaticText(self, -1, "Filter name")
+        self.choice_flist = wx.Choice(self, -1, choices=[x.__extname__ for x in flist])
+        self.button_OK = wx.Button(self, wx.ID_OK)
+        self.button_Cancel = wx.Button(self, wx.ID_CANCEL)
+        
+        hbox = wx.BoxSizer(wx.HORIZONTAL)
+        hbox.AddStretchSpacer(1)
+        hbox.Add(self.button_Cancel, 0, wx.RIGHT|wx.ALIGN_RIGHT, 5)
+        hbox.Add(self.button_OK, 0, wx.RIGHT|wx.ALIGN_RIGHT, 5)
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(self.label_flist, 0, wx.ALL|wx.EXPAND, 2)
+        sizer.Add(self.choice_flist, 0, wx.ALL|wx.EXPAND, 2)
+        sizer.Add(hbox, 0, wx.ALL|wx.EXPAND, 2)
+        self.SetSizer(sizer)
+        self.Fit()
+    
+    def GetValue(self):
+        return self.choice_flist.GetSelection()

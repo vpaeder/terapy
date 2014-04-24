@@ -214,7 +214,7 @@ class AxesList(wx.grid.PyGridTableBase):
                 units name + symbol (str)
         
         """
-        return "%s (%s)" % ("{:P}".format(units),"".join("{:~}".format(units).split(' ')[1:]))
+        return "%s (%s)" % (u"{:P}".format(units),"".join("{:~}".format(units).split(' ')[1:]))
     
     def GetValue(self, row, col):
         """
@@ -448,7 +448,7 @@ def ConvertUnits(old, new, ask_incompatible=True):
             old[n] = new[n]
         except:
             if ask_incompatible:
-                if wx.MessageBox("New units for axis %d (%s) are incompatible with old ones (%s). Apply anyway?" % (n, "{:P}".format(new[n].units.units), "{:P}".format(old[n].units.units)), "Incompatible units", style=wx.YES | wx.NO) == wx.YES:
+                if wx.MessageBox(u"New units for axis %d (%s) are incompatible with old ones (%s). Apply anyway?" % (n, u"{:P}".format(new[n].units.units), u"{:P}".format(old[n].units.units)), "Incompatible units", style=wx.YES | wx.NO) == wx.YES:
                     old[n] = new[n]
             else:
                 try:

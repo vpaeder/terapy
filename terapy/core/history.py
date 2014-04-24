@@ -336,7 +336,7 @@ class HistoryControl(wx.Panel):
         self.button_up.Bind(wx.EVT_BUTTON, lambda x:self.Move(-1),self.button_up)
         self.button_remove.Bind(wx.EVT_BUTTON,lambda x:self.Delete(self.list.GetFirstSelected()),self.button_remove)
         
-        pub.subscribe(self.SetReference, 'filter.change_reference')
+        pub.subscribe(self.ChangeReference, 'filter.change_reference')
         pub.subscribe(self.ClearReference, 'filter.clear_reference')
         pub.subscribe(self.OnPlotDeleted, 'plot.delete')
         pub.subscribe(self.SetColors, 'plot.color_change')
@@ -510,10 +510,10 @@ class HistoryControl(wx.Panel):
                 event    -    wx.Event
         
         """
-        if event.data==None: return
+        if event==None: return
         for n in range(self.list.GetItemCount()):
             arr = self.list.GetItemPyData(n)
-            if arr.plot==event.data:
+            if arr.plot==event:
                 arr.plot.Delete()
     
     def OnLeftClick(self, event = None):
@@ -692,19 +692,30 @@ class HistoryControl(wx.Panel):
                              or pubsub data (DataArray)
         
         """
+        self.TagAsReference(inst)
+        self.ChangeReference(inst)
+        arr = self.list.GetItemPyData(inst)
+        pub.sendMessage('history.set_reference', inst=arr)
+    
+    def ChangeReference(self, inst):
+        """
+        
+            Set selected item as reference.
+            
+            Parameters:
+                inst    -    item position (int)
+                             or pubsub data (DataArray)
+        
+        """
         if not(isinstance(inst,int)):
             if isinstance(inst,DataArray):
                 for n in range(self.list.GetItemCount()):
                     arr = self.list.GetItemPyData(n)
                     if arr == inst:
-                        position = n
+                        inst = n
                         break
-            message = 'history.change_reference'
-        else:
-            message = 'history.set_reference'
         self.TagAsReference(inst)
         arr = self.list.GetItemPyData(inst)
-        pub.sendMessage(message, inst=arr)
     
     def TagAsReference(self, position, state=True):
         """

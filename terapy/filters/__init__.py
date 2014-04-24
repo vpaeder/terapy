@@ -198,7 +198,7 @@ class FilterBank():
         doc.appendChild(croot)
         root = doc.createElement("filters")
         root.attributes["name"] = self.name
-        root.attributes["dimension"] = self.dim
+        root.attributes["dimension"] = str(self.dim)
         croot.appendChild(root)
         for n in range(len(self.filters)):
             ft = self.filters[n]
@@ -366,6 +366,7 @@ class FilterBank():
         """
         # apply all filters
         narray = array.Copy()
+        narray.source = array
         units = [x.units for x in narray.axes]
         units.append(narray.input.units)
 
@@ -376,6 +377,7 @@ class FilterBank():
         
         for n in range(len(narray.axes)): narray.axes[n].units = units[n]
         narray.input.units = units[-1]
+        
         return narray
     
     def GetUnits(self, units):

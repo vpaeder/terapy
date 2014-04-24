@@ -231,7 +231,10 @@ class ScanEventList(wx.Panel):
         self.list_events.SetItemFont(nitm,f)
         self.list_events.SetItemPyData(nitm,ev)
         if expand:
-            self.list_events.Expand(root)
+            if wx.Platform == '__WXMSW__': # can't expand/collapse hidden root node with Windows
+                pass # TODO: implement a "manual" expand of children
+            else:
+                self.list_events.Expand(root)
         ev.refresh()
         ev.populate()
         return nitm
@@ -437,7 +440,7 @@ class ScanEventList(wx.Panel):
                 string    -    XML tree in string format (str)
         
         """
-        if not(isinstance(string,str)):
+        if not(isinstance(string,str)) and not(isinstance(string,unicode)):
             string = string.data
         from xml.dom import minidom
         xmldoc = minidom.parseString(string).getElementsByTagName('events')
@@ -663,8 +666,8 @@ class ScanEventList(wx.Panel):
                 event -    wx.Event
         
         """
+        itm = self.list_events.HitTest(self.menuPosition)[0]
         if ev.set():
-            itm = self.list_events.HitTest(self.menuPosition)[0]
             if not(itm.IsOk()):
                 itm = self.list_events.GetRootItem()
             self.InsertItem(ev, itm)
