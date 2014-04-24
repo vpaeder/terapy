@@ -79,7 +79,7 @@ class FixedPoint(Filter):
         
         # correct phase - obviously, the phase information is present only if the full complex signal is used
         ratio = array.data/self.ref.data
-        phase = unwrap(arctan2(ratio.imag,ratio.real))
+        phase = unwrap(-arctan2(ratio.imag,ratio.real))
         p0 = self.thickness/c*(ns0-self.host) # slope estimate
         for n in range(len(phase)-1):
             dp = (omega[n+1]-omega[n])*p0*self.deviation
@@ -97,12 +97,12 @@ class FixedPoint(Filter):
                 nit+=1
                 ns1 = ns
                 Fp = self.fabry_perot(self.host, ns, omega[n], self.thickness, Nr)
-                Hm = array.data[n]/Fp
-                Fpp = arctan2(Fp.imag,Fp.real)
+                Hm = ratio[n]/Fp
+                Fpp = -arctan2(Fp.imag,Fp.real)
                 cor = 4.0*ns/(ns+self.host)**2
-                ns = c/(omega[n]*self.thickness)*(phase[n]-Fpp-arctan2(cor.imag,cor.real)) + self.host
-                ks = c/(omega[n]*self.thickness)*(log(abs(Hm))-log(abs(cor)))
-                ns = ns + 1j*ks
+                ns = c/(omega[n]*self.thickness)*(phase[n]-Fpp+arctan2(cor.imag,cor.real)) + self.host
+                ks = -c/(omega[n]*self.thickness)*(log(abs(Hm))-log(abs(cor)))
+                ns = abs(ns) - 1j*abs(ks)
                 
                 if nit>100: break # stop after 100 iterations
             

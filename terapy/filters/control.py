@@ -359,6 +359,7 @@ class FilterControl(wx.Panel):
                 event    -    wx.Event
         
         """
+        if self.bank==None: return
         # pop up menu with filter-related actions
         menuAdd = wx.Menu()
         modules = GetModules(self.dim)

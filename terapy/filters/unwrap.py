@@ -46,7 +46,8 @@ class PhaseUnwrapping(Filter):
         
         if isinstance(array.data[0],complex):
             phase = np.arctan2(array.data.imag,array.data.real)
-            array.data = abs(array.data)*np.exp(1j*np.unwrap(phase,np.pi*self.threshold))
+            array.data = np.unwrap(-phase,np.pi*self.threshold)
+            #array.data = abs(array.data)*np.exp(1j*np.unwrap(phase,np.pi*self.threshold))
         else:
             array.data = np.unwrap(np.array(array.data),np.pi*self.threshold)
         
