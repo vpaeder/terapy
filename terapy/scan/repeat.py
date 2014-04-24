@@ -47,6 +47,7 @@ class Repeat(ScanEvent):
         n=0
         while n<self.N and self.can_run:
             n+=1
+            data.SetCoordinateValue(self.m_ids,float(n))
             self.run_children(data)
             data.Increment(self.m_ids)
                     
