@@ -243,6 +243,13 @@ class FilterControl(wx.Panel):
                 fname    -    file name (str)
         
         """
+        dlg = wx.TextEntryDialog(self,message="Filter bank name",defaultValue=self.bank.name)
+        if dlg.ShowModal()!=wx.ID_OK:
+            dlg.Destroy()
+            return
+        self.bank.name = dlg.GetValue()
+        dlg.Destroy()
+        
         if fname=="":
             dlg = wx.FileDialog(self, "Choose output file", os.getcwd(),"", "Configuration file (*.ini)|*.ini|All files (*.*)|*.*", wx.SAVE)
             if dlg.ShowModal() != wx.ID_OK:
