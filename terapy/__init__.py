@@ -46,7 +46,7 @@ from terapy.scan.control import ScanEventList
 from terapy.core.history import HistoryControl
 from terapy.core import icon_path
 
-__version__         = "2.00b6 / 24.01.2014"
+__version__         = "2.00b7 / 25.04.2014"
 __doc_url__         = "http://pythonhosted.org/terapy/doc.html"
 
 class TeraPyMainFrame(wx.Frame):

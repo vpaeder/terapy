@@ -410,3 +410,6 @@ modules = parse_modules(__package__, curdir, Filter)
 from terapy.core import module_path
 if os.path.exists(module_path):
     modules.extend(parse_modules("custom.filter.", module_path, Filter))
+
+# sort modules by name, alphabetically
+modules.sort(key=lambda x:x.__extname__)

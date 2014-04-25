@@ -64,7 +64,7 @@ class FilterControl(wx.Panel):
         
         """
         wx.Panel.__init__(self, parent)
-        self.bank = FilterBank()
+        self.bank = None
         self.dim = dim
         
         # filter list

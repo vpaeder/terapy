@@ -489,8 +489,12 @@ class DataArray():
         narray.name = self.name
         narray.scanDim = self.scanDim
         narray.filename = self.filename
-        narray.input = self.input.copy()
-        narray.axes = [x.copy() for x in self.axes]
+        try:
+            narray.input = self.input.copy()
+            narray.axes = [x.copy() for x in self.axes]
+        except:
+            narray.input = AxisInfos()
+            narray.axes = [AxisInfos() for x in self.axes]
         
         return narray
 
@@ -526,11 +530,17 @@ class DataArray():
         factors = ConvertUnits(old_labels, new_labels, ask_incompatible = False)
         for n in range(len(factors)):
             if n<len(self.shape):
-                self.axes[n].units = old_labels[n].units
-                self.axes[n].name = old_labels[n].name
+                try:
+                    self.axes[n].units = old_labels[n].units
+                    self.axes[n].name = old_labels[n].name
+                except:
+                    pass
             else:
-                self.input.units = old_labels[n].units
-                self.input.name = old_labels[n].name
+                try:
+                    self.input.units = old_labels[n].units
+                    self.input.name = old_labels[n].name
+                except:
+                    pass
             if factors[n]!=1:
                 if n<len(self.shape):
                     self.coords[n] *= factors[n]

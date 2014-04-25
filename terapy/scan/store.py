@@ -146,7 +146,7 @@ class Store(ScanEvent):
         self.host.GetEventHandler().ProcessEvent(evt)
 
     def get_icon(self):
-        return wx.Image(icon_path + "event-move.png").ConvertToBitmap()
+        return wx.Image(icon_path + "event-store.png").ConvertToBitmap()
 
 class StoreEventDialog(wx.Dialog):
     """

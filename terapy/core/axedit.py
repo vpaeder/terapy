@@ -265,7 +265,7 @@ class AxisInfos():
         Axis infos class - report on axis name and units
         
     """
-    def __init__(self, name, units, device=None):
+    def __init__(self, name="", units="", device=None):
         """
         
             Initialization.
