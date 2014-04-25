@@ -586,6 +586,9 @@ class ScanEventList(wx.Panel):
                 itm    -    root item for sequence (wx.TreeItem)
         
         """
+        # disable controls
+        self.ToggleControls(False)
+        
         # refresh events
         self.RefreshEvents()
         
@@ -599,6 +602,7 @@ class ScanEventList(wx.Panel):
         self.plot_or_save = [False]*meas.count
         if not(self.CheckValidity(stree,meas)):
             print "Invalid event tree!"
+            self.ToggleControls(True)
             return
         del self.plot_or_save
         
@@ -610,9 +614,6 @@ class ScanEventList(wx.Panel):
         from terapy import hardware
         doc = hardware.get_system_state()
         meas.systemState = doc.toprettyxml(indent="  ", newl="\n")
-        
-        # disable controls
-        self.ToggleControls(False)
         
         # announce measurement start
         pub.sendMessage("scan.start", inst=meas)
@@ -845,4 +846,5 @@ class ScanEventList(wx.Panel):
         self.button_add.Enable(state)
         self.button_up.Enable(state)
         self.button_run.Switch(state)
+        pub.sendMessage("scan.toggle_controls", inst=state)
 

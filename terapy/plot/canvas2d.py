@@ -196,7 +196,11 @@ class PlotCanvas2D(PlotCanvas,PlotPanel):
             fig.colorbar(plt,format="%0.1e")
             self.SetLabels()
             # redraw
-            self.draw()
+            try:
+                # this can fail with invalid data (e.g. undefined/NaN/...)
+                self.draw()
+            except:
+                pass
     
     def Delete(self, event=None):
         """

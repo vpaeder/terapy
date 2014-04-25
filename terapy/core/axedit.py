@@ -265,7 +265,7 @@ class AxisInfos():
         Axis infos class - report on axis name and units
         
     """
-    def __init__(self, name, units):
+    def __init__(self, name, units, device=None):
         """
         
             Initialization.
@@ -273,9 +273,11 @@ class AxisInfos():
             Parameters:
                 name    -    axis name (str)
                 units   -    axis units (str or quantities)
+                device  -    pointer to device driver
         
         """
         self.name = name
+        self.device = device
         if isinstance(units,str):
             # units given as string => try to match with physical units
             try:
@@ -300,6 +302,15 @@ class AxisInfos():
     
     def __repr__(self):
         return "<AxisInfos(%s, %s) instance at %s>" % (self.name, self.pretty_units(), hex(id(self)))
+    
+    def extended(self):
+        if self.device==None:
+            return self.label()
+        else:
+            label = ""
+            if hasattr(self.device,'name'):
+                label += self.device.name + " - "
+            return label + self.label()
     
     def name(self):
         """
@@ -371,7 +382,7 @@ class AxisInfos():
         
         """
         
-        return AxisInfos(self.name,urg["%s" % (self.units)])
+        return AxisInfos(self.name,urg["%s" % (self.units)],self.device)
 
 def FormatUnits(units):
     """

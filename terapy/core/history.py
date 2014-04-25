@@ -421,10 +421,11 @@ class HistoryControl(wx.Panel):
             pub.sendMessage("set_status_text",inst="Loading old scan data...")
             for ff in files.modules:
                 data = None
-                try:
-                    data = ff().read(dialog.GetPath())
-                except:
-                    pass
+                if ff().can_read:
+                    try:
+                        data = ff().read(dialog.GetPath())
+                    except:
+                        pass
                 if data!=None:
                     break
             for x in data:
@@ -779,7 +780,8 @@ class HistoryControl(wx.Panel):
         
         if dlg.ShowModal() == wx.ID_OK:
             arr = self.list.GetItemPyData(position)
-            flt = files.modules[dlg.GetFilterIndex()]()
+            save_modules = [x for x in files.modules if x().can_save]
+            flt = save_modules[dlg.GetFilterIndex()]()
             flt.save(dlg.GetPath(),self.list.GetItemPyData(position))
             plt = arr.plot
             n = 0

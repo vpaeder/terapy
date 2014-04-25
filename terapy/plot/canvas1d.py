@@ -173,10 +173,11 @@ class PlotCanvas1D(PlotCanvas,PlotPanel):
         try:
             # this can fail with invalid data (e.g. negative values with log scale)
             self.axes.autoscale_view()
+            # this also
+            self.draw()
         except:
             pass
-        self.draw()
-        
+    
     def SetImage(self, n=1):
         """
         

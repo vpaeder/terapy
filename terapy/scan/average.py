@@ -62,6 +62,7 @@ class Average(ScanEvent):
             self.run_children(data)
             for m_id in self.m_ids:
                 data0.data[m_id].data = data0.data[m_id].data + data.data[m_id].data
+				
             data.Increment(self.m_ids)
         for m_id in self.m_ids:
             data.data[m_id].data = data0.data[m_id].data/self.avg

@@ -25,7 +25,7 @@
 from terapy.scan.base import ScanEvent
 import wx
 import os
-from terapy.core import icon_path, default_path
+from terapy.core import icon_path, default_path, user_path
 from time import strftime, localtime
 
 class SaveBase(ScanEvent):
@@ -39,10 +39,11 @@ class SaveBase(ScanEvent):
         ScanEvent.__init__(self, parent)
         self.filename = ""
         self.autoname = True
-        self.propNames = ["File name","Automatic"]
+        self.propNames = ["File name","Automatic","Backup"]
         self.is_save = True
         self.is_visible = False
-        self.config = ["filename","autoname"]
+        self.backup = True
+        self.config = ["filename","autoname","backup"]
         self.filter = None
         
     def run(self, data):
@@ -52,11 +53,12 @@ class SaveBase(ScanEvent):
         ScanEvent.refresh(self)
         if self.autoname: self.filename=""
         if hasattr(self,'fname'): del self.fname
+        if hasattr(self,'bfname'): del self.bfname
     
     def set(self, parent=None):
-        dlg = FileSelectionDialog(parent, fname=self.filename, wildcard=self.get_wildcard(), autoname=self.autoname)
+        dlg = FileSelectionDialog(parent, fname=self.filename, wildcard=self.get_wildcard(), autoname=self.autoname, backup = self.backup)
         if dlg.ShowModal() == wx.ID_OK:
-            self.filename,self.autoname = dlg.GetValue()
+            self.filename,self.autoname,self.backup = dlg.GetValue()
             dlg.Destroy()
             return True
         else:
@@ -64,7 +66,7 @@ class SaveBase(ScanEvent):
             return False
     
     def populate(self):
-        self.propNodes = [os.path.basename(self.filename),["No","Yes"][self.autoname]]
+        self.propNodes = [os.path.basename(self.filename),["No","Yes"][self.autoname],["No","Yes"][self.backup]]
         self.create_property_root()
         self.set_property_nodes(True)
         
@@ -79,10 +81,13 @@ class SaveBase(ScanEvent):
         elif pos==1:
             event.Veto()
             self.autoname = not(self.autoname)
+        elif pos==2:
+            event.Veto()
+            self.backup = not(self.backup)
         
         self.refresh()
                 
-        self.propNodes = [os.path.basename(self.filename),["No","Yes"][self.autoname]]
+        self.propNodes = [os.path.basename(self.filename),["No","Yes"][self.autoname],["No","Yes"][self.backup]]
         self.set_property_nodes(True)
 
     def get_wildcard(self):
@@ -107,14 +112,22 @@ class SaveBase(ScanEvent):
                 else:
                     ext = ".dat"
                 fname = "scan_" + strftime("%d-%m-%Y_%H-%M-%S", localtime()) + ext
-                pathname = os.path.join(default_path, strftime("%Y-%m-%d", localtime()))
+                pathname = os.path.join(user_path, strftime("%Y-%m-%d", localtime()))
             else:
                 fname = os.path.basename(self.filename)
                 pathname = os.path.join(os.path.dirname(self.filename), strftime("%Y-%m-%d", localtime()))
             
+            # make full file name
             if not os.path.exists(pathname):
                 os.makedirs(pathname)
             self.fname = os.path.join(pathname, fname)
+            
+            # make full backup file name
+            if self.backup:
+                backup_path = os.path.join(default_path, strftime("%Y-%m-%d", localtime()))
+                if not os.path.exists(backup_path):
+                    os.makedirs(backup_path)
+                self.bfname = os.path.join(backup_path, fname)
         
         return self.fname
     
@@ -127,7 +140,7 @@ class FileSelectionDialog(wx.Dialog):
         Save scan event configuration dialog
     
     """
-    def __init__(self, parent = None, title="Select output file", fname = "", wildcard = "", autoname = True):
+    def __init__(self, parent = None, title="Select output file", fname = "", wildcard = "", autoname = True, backup = True):
         """
         
             Initialization.
@@ -145,6 +158,7 @@ class FileSelectionDialog(wx.Dialog):
         self.input_filename = wx.TextCtrl(self, -1, os.path.basename(fname))
         self.button_filename = wx.Button(self,-1,"...")
         self.check_autoname = wx.CheckBox(self,-1,"Name with time stamp")
+        self.check_backup = wx.CheckBox(self,-1,"Save backup")
 
         self.button_OK = wx.Button(self, wx.ID_OK)
         self.button_Cancel = wx.Button(self, wx.ID_CANCEL)
@@ -163,6 +177,7 @@ class FileSelectionDialog(wx.Dialog):
         sizer.Add(self.label_filename, 0, wx.ALL|wx.EXPAND, 2)
         sizer.Add(hboxf, 0, wx.ALL|wx.EXPAND, 2)
         sizer.Add(self.check_autoname, 0, wx.ALL|wx.EXPAND, 2)
+        sizer.Add(self.check_backup, 0, wx.ALL|wx.EXPAND, 2)
         sizer.Add(hbox, 0, wx.ALL|wx.EXPAND, 2)
         self.SetSizer(sizer)
         self.Fit()
@@ -170,6 +185,7 @@ class FileSelectionDialog(wx.Dialog):
         self.input_filename.Enable(not(autoname))
         self.button_filename.Enable(not(autoname))
         self.check_autoname.SetValue(autoname)
+        self.check_backup.SetValue(backup)
         
         self.Bind(wx.EVT_CHECKBOX, self.OnAutonameCheck, self.check_autoname)
         self.Bind(wx.EVT_BUTTON, self.OnFilenameButton, self.button_filename)
@@ -250,4 +266,4 @@ class FileSelectionDialog(wx.Dialog):
                 file name (str), auto name (bool)
         
         """
-        return self.fname, self.check_autoname.GetValue()
+        return self.fname, self.check_autoname.GetValue(), self.check_backup.GetValue()

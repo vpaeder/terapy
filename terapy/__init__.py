@@ -185,6 +185,7 @@ class TeraPyMainFrame(wx.Frame):
         pub.subscribe(self.OnStartMeasurement, "scan.start")
         pub.subscribe(self.SetStatusText, "set_status_text")
         pub.subscribe(self.OnStopMeasurement, "scan.after")
+        pub.subscribe(self.ToggleScanControls, "scan.toggle_controls")
         pub.subscribe(self.SetProgressValue, "progress_change")
         pub.subscribe(self.SetRefresh, "request_canvas")
         pub.subscribe(self.BroadcastWindow, "request_top_window")
@@ -376,6 +377,7 @@ class TeraPyMainFrame(wx.Frame):
         meas = inst
         # disable controls
         self.ToggleScanControls(False)
+        
         # stop axis/input display update
         self.StopDeviceTimer()
         
@@ -536,21 +538,21 @@ class TeraPyMainFrame(wx.Frame):
         """
         pub.sendMessage("load_data")
                     
-    def ToggleScanControls(self, state = True):
+    def ToggleScanControls(self, inst = True):
         """
         
             Enable/Disable interface elements.
             
             Parameters:
-                state    -    state (bool)
+                inst    -    state (bool)
         
         """
         # enable menus
-        self.menuBar.EnableTop(0, state)
-        self.menuBar.EnableTop(1, state)
+        self.menuBar.EnableTop(0, inst)
+        self.menuBar.EnableTop(1, inst)
         # enable widgets
         for x in self.device_widgets:
-            x.Enable(state)
+            x.Enable(inst)
         
     def OnStopMeasurement(self, inst = None):
         """
@@ -693,7 +695,7 @@ class TeraPyMainFrame(wx.Frame):
         
         """
         for x in self.device_widgets:
-            x.timer.need_display = True
+            x.timer.pause(False)
         
     def StopDeviceTimer(self,destroy=False):
         """
@@ -702,7 +704,7 @@ class TeraPyMainFrame(wx.Frame):
         
         """
         for x in self.device_widgets:
-            x.timer.need_display = False
+            x.timer.pause(True)
             if destroy:
                 x.timer.stop()
     

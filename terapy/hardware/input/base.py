@@ -211,6 +211,10 @@ class InputWidget(wx.ScrolledWindow):
 			curval = self.qtynames[n] + [": ",""][self.qtynames[n]==""] + ("%3.3f" % (val[n]/self.scalesval[sidx])) + " " + self.scales[sidx] + self.units[n]
 			self.label_value[n].SetLabel(curval)
 	
+	def Enable(self, state):
+		wx.ScrolledWindow.Enable(self, state)
+		self.timer.pause(not(state))
+	
 	def OnReset(self, event = None):
 		"""
 		
@@ -289,6 +293,10 @@ class AntennaWidget(wx.ScrolledWindow):
 		"""
 		self.label_amplitude.SetLabel(str(val) + " " + self.units)
 	
+	def Enable(self, state):
+		wx.ScrolledWindow.Enable(self, state)
+		self.timer.pause(not(state))
+
 	def OnGo(self, event = None):
 		"""
 		

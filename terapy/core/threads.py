@@ -148,7 +148,10 @@ class WidgetUpdateThread(threading.Thread):
 			
 			if self.need_display:
 				val = self.read()
-				wx.CallAfter(self.widget.RefreshDisplay,val)
+				if self.can_run: wx.CallAfter(self.widget.RefreshDisplay,val)
+	
+	def pause(self, state=True):
+		self.need_display = not(state)
 	
 	def stop(self):
 		self.can_run = False

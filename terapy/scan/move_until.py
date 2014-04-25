@@ -72,7 +72,7 @@ class MoveUntil(ScanEvent):
             v0 = tr.read()[self.quantity]
             cond = True
             
-            while cond:
+            while cond and self.can_run:
                 v = tr.read()[self.quantity]
                 if self.condition==0: # trigger is equal to
                     cond = (v!=self.value)

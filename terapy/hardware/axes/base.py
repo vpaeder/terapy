@@ -285,6 +285,10 @@ class AxisWidget(wx.ScrolledWindow):
 		"""
 		self.label_position.SetLabel(("%3.2f" % val) + " " + self.units)
 		
+	def Enable(self, state):
+		wx.ScrolledWindow.Enable(self, state)
+		self.timer.pause(not(state))
+	
 	def SetValue(self, val):
 		"""
 		
@@ -320,9 +324,9 @@ class AxisWidget(wx.ScrolledWindow):
 				event	-	wx.Event
 		
 		"""
-		self.axis.home()
-		val = self.axis.pos()
-		self.input_position.SetValue(str(val))
+		self.timer.home()
+		#val = self.axis.pos()
+		#self.input_position.SetValue(str(val))
 
 	def OnReset(self, event = None):
 		"""
@@ -333,9 +337,7 @@ class AxisWidget(wx.ScrolledWindow):
 				event	-	wx.Event
 		
 		"""
-		self.axis.reset()
-		val = self.axis.pos()
-		self.input_position.SetValue(str(val))
+		self.timer.reset()
 	
 	def OnSet(self, event = None):
 		"""
@@ -393,6 +395,8 @@ class AxisWidget(wx.ScrolledWindow):
 class AxisWidgetUpdateThread(WidgetUpdateThread):
 	def __init__(self,widget):
 		self.must_move = False
+		self.must_home = False
+		self.must_reset = False
 		self.pos = 0.0
 		WidgetUpdateThread.__init__(self,widget)
 	
@@ -408,17 +412,38 @@ class AxisWidgetUpdateThread(WidgetUpdateThread):
 		self.pos = pos
 		self.must_move = True
 	
+	def home(self):
+		self.must_home = True
+	
+	def reset(self):
+		self.must_reset = True
+	
 	def run(self):
 		while self.can_run:
-			if self.need_display and self.can_run:
-				val = self.read()
-				wx.CallAfter(self.widget.RefreshDisplay,val)
-			if self.must_move and self.can_run:
+			if self.must_move:
 				self.widget.axis.stop()
 				self.widget.axis.goTo(self.pos)
 				self.must_move = False
+			elif self.must_home:
+				self.widget.axis.stop()
+				self.widget.axis.home()
+				self.must_home = False
+			elif self.must_reset:
+				self.widget.axis.stop()
+				self.widget.axis.reset()
+				self.must_reset = False
+			else:
+				if self.need_display:
+					val = self.read()
+					if self.can_run: wx.CallAfter(self.widget.RefreshDisplay,val)
 			
 			sleep(self.delay/1000.0)
-			
+	
+	def pause(self, state):
+		WidgetUpdateThread.pause(self,state)
+		self.must_move = False
+		self.must_home = False
+		self.must_reset = False
+	
 	def stop(self):
 		self.can_run = False
