@@ -102,6 +102,7 @@ class ScanEventList(wx.Panel):
         self.Bind(wx.EVT_BUTTON, self.OnButtonRun, self.button_run)
         pub.subscribe(self.OnStopMeasurement, "scan.after")
         pub.subscribe(self.ParseXMLFromString, "history.reload_events")
+        pub.subscribe(self.OnSaveDefaultEvents, "scan.save_default")
 
         self.list_events.SetDropTarget(EventDrop(self.OnEndDrag))
         
@@ -467,7 +468,36 @@ class ScanEventList(wx.Panel):
             doc.writexml(f,indent="  ", addindent="  ", newl="\n")
             f.close()
             dialog.Destroy()
-
+    
+    def OnSaveDefaultEvents(self, inst=None):
+        """
+        
+            Save current list of events as default.
+            
+            Parameters:
+                inst    -    pubsub argument (not used)
+        
+        """
+        if event_file==None:
+            pub.sendMessage("set_status_text",inst="No event file defined. Can't save!")
+            return # no event file defined, can't save
+        # get list of sequences
+        sqs = self.list_events.GetItemChildren(self.list_events.GetRootItem(),ScanEvent)
+        doc = None
+        for seq in sqs:
+            if doc==None:
+                doc = self.BuildXMLTree(seq)
+            else:
+                self.BuildXMLTree(seq, doc.childNodes[0].childNodes[0],doc)
+        
+        try:
+            f = open(event_file,"w")
+            doc.writexml(f,indent="  ", addindent="  ", newl="\n")
+            f.close()
+            pub.sendMessage("set_status_text",inst="Default events saved.")
+        except:
+            pub.sendMessage("set_status_text",inst="Can't write in event file!")
+    
     def OnReplaceEvent(self, old, new, event):
         """
         

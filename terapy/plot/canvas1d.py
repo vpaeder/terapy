@@ -84,7 +84,7 @@ class PlotCanvas1D(PlotCanvas,PlotPanel):
         self.Bind(wx.EVT_LEFT_DCLICK, self.OnLeftDblClick, self)
         self.Bind(wx.EVT_RIGHT_DOWN, self.OnRightClick, self)
     
-    def OnLectDblClick(self, event):
+    def OnLeftDblClick(self, event):
         """
         
             Actions triggered on left mouse button double click.

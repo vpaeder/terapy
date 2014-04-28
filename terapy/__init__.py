@@ -207,6 +207,11 @@ class TeraPyMainFrame(wx.Frame):
         mitem = menuFile.Append(wx.NewId(), "&Default units")
         self.Bind(wx.EVT_MENU, self.OnDefaultUnits, id=mitem.Id)
         menuFile.AppendSeparator()
+        mitem = menuFile.Append(wx.NewId(), "&Save default events")
+        self.Bind(wx.EVT_MENU, self.OnSaveDefaultEvents, id=mitem.Id)
+        mitem = menuFile.Append(wx.NewId(), "&Save default filters")
+        self.Bind(wx.EVT_MENU, self.OnSaveDefaultFilters, id=mitem.Id)
+        menuFile.AppendSeparator()
         mitem = menuFile.Append(wx.NewId(), "E&xit")
         self.Bind(wx.EVT_MENU, self.OnQuit, id=mitem.Id)
         
@@ -498,7 +503,29 @@ class TeraPyMainFrame(wx.Frame):
                 du[x.name] = x.units
             pub.sendMessage("default_units.changed")
         dlg.Destroy()
-
+    
+    def OnSaveDefaultEvents(self, event):
+        """
+        
+            Send request to save default events.
+            
+            Parameters:
+                event    -    event object (wx.Event)
+        
+        """
+        pub.sendMessage("scan.save_default")
+    
+    def OnSaveDefaultFilters(self, event):
+        """
+        
+            Send request to save default filters.
+            
+            Parameters:
+                event    -    event object (wx.Event)
+        
+        """
+        pub.sendMessage("filter.save_default")
+    
     def OnResetHardware(self, event = None):
         """
         

@@ -122,6 +122,7 @@ class FilterControl(wx.Panel):
         pub.subscribe(self.OnFilterUpdate, "plot.apply_filters")
         pub.subscribe(self.UpdateFilterDisplay, "plot.switch_canvas")
         pub.subscribe(self.RefreshFilters, "filter.change")
+        pub.subscribe(self.OnSaveDefaultFilters, "filter.save_default")
         
         # drag and drop enable
         self.list.SetDropTarget(FilterDrop(self.OnEndDrag))
@@ -258,6 +259,35 @@ class FilterControl(wx.Panel):
             fname = dlg.GetPath()
             dlg.Destroy()
         self.bank.SaveFilterList(fname)
+    
+    def OnSaveDefaultFilters(self, inst=None):
+        """
+        
+            Save current list of filters as default.
+            
+            Parameters:
+                inst    -    pubsub argument (not used)
+        
+        """
+        from terapy.core import filter_file
+        if filter_file==None:
+            pub.sendMessage("set_status_text",inst="No filter file defined. Can't save!")
+            return # no filter file defined, can't save
+        if self.bank==None:
+            pub.sendMessage("set_status_text",inst="No active filter bank. Can't save!")
+            return # filter control is empty, as no filter bank is active
+        
+        old_name = self.bank.name
+        self.bank.name = "Default filter bank"
+        
+        try:
+            self.bank.SaveFilterList(filter_file)
+            pub.sendMessage("set_status_text",inst="Default filters saved.")
+        except:
+            pub.sendMessage("set_status_text",inst="Can't write in filter file!")
+        
+        self.bank.name = old_name
+
     
     def OnFilterUpdate(self, inst=None):
         """
