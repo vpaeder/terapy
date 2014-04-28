@@ -26,7 +26,8 @@ import wx
 from terapy.icons import DataIconList
 from terapy.plot import canvas_modules
 from terapy.core.dragdrop import HistoryDrop
-from wx.lib.pubsub import Publisher as pub
+from wx.lib.pubsub import setupkwargs
+from wx.lib.pubsub import pub
 from time import time
 import functools
 
@@ -112,20 +113,24 @@ class PlotNotebook(wx.Notebook):
         self.InsertPage(pos, cnv, title, display)
         cnv.SetImage()
     
-    def RemoveCanvas(self, event=None, idx = None):
+    def RemoveCanvas(self, inst=None, idx = None):
         """
         
             Remove canvas given by index.
             
             Parameters:
-                event    -    wx.Event
-                idx      -    canvas index (int)
+                inst    -    pubsub data
+                idx     -    canvas index (int)
         
         """
-        if event!=None:
-            idx = self.FindCanvas(event.data)
+        if inst!=None:
+            idx = self.FindCanvas(inst)
         if idx>-1 and idx<self.PageCount:
-            self.DeletePage(idx)
+            if self.PageCount==1:
+                # needed to avoid a crash on MacOS with wxPython 3
+                self.DeleteAllPages()
+            else:
+                self.DeletePage(idx)
             pub.sendMessage("plot.delete")
             pub.sendMessage("plot.color_change")
     
@@ -438,7 +443,7 @@ class PlotNotebook(wx.Notebook):
                 inst    -    pubsub event data
         
         """
-        pub.sendMessage("broadcast_canvas",data=self)
+        pub.sendMessage("broadcast_canvas",inst=self)
 
     def AddPlot(self, target="current", array = None):
         """
@@ -509,11 +514,11 @@ class PlotNotebook(wx.Notebook):
         if self.PageCount==0: return
         page = self.GetPage(event.Selection)
         if page.is_filter:
-            pub.sendMessage("plot.set_filters", data=page.bank)
-            pub.sendMessage("plot.enable_filters", data=True)
+            pub.sendMessage("plot.set_filters", inst=page.bank)
+            pub.sendMessage("plot.enable_filters", inst=True)
         else:
-            pub.sendMessage("plot.set_filters", data=None)
-            pub.sendMessage("plot.enable_filters", data=False)
+            pub.sendMessage("plot.set_filters", inst=None)
+            pub.sendMessage("plot.enable_filters", inst=False)
         pub.sendMessage("plot.switch_canvas")
 
     def OnEndDrag(self, x, y, data):
@@ -557,5 +562,5 @@ class PlotNotebook(wx.Notebook):
                 inst    -    pubsub event data
         
         """
-        self.drag_object = inst.data
+        self.drag_object = inst
         

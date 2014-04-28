@@ -105,7 +105,7 @@ class TreeCtrl(wx.TreeCtrl):
                     children.append(child)
                     child, cookie = self.GetNextChild(itm, cookie)
                 else:
-                    data = self.GetItemData(child).GetData()
+                    data = self.GetItemPyData(child)
                     if isinstance(data,cl):
                         children.append(child)
                     child, cookie = self.GetNextChild(itm, cookie)
@@ -128,7 +128,7 @@ class TreeCtrl(wx.TreeCtrl):
             for x in itmlist:
                 if isinstance(x,wx.TreeItemId):
                     if x.IsOk():
-                        ev = self.GetItemData(x).GetData()
+                        ev = self.GetItemPyData(x)
                         children.append(ev)
                     else:
                         children.append([])
@@ -163,7 +163,7 @@ class TreeCtrl(wx.TreeCtrl):
                     else:
                         stree.AppendItem(SubTreeItem(self,x))
                 else:
-                    data = self.GetItemData(x).GetData()
+                    data = self.GetItemPyData(x)
                     if isinstance(data,cl):
                         if self.ItemHasChildren(x):
                             st = self.GetItemSubTree(x,cl)
@@ -177,7 +177,7 @@ class TreeCtrl(wx.TreeCtrl):
             if cl==None:
                 stree = SubTreeItem(self,itm)
             else:
-                data = self.GetItemData(itm).GetData()
+                data = self.GetItemPyData(itm)
                 if isinstance(data,cl):
                     stree = SubTreeItem(self,itm)
         return stree
@@ -283,7 +283,7 @@ class SubTreeItem():
                     self.text = self.tree.GetItemText(itm)
                     self.font = self.tree.GetItemFont(itm)
                     self.image = self.tree.GetItemImage(itm)
-                    self.data = self.tree.GetItemData(itm).GetData()
+                    self.data = self.tree.GetItemPyData(itm)
                     self.expand = self.tree.IsExpanded(itm)
                 except:
                     pass
@@ -302,7 +302,7 @@ class SubTreeItem():
                 self.tree.SetItemText(itm,self.text)
                 self.tree.SetItemFont(itm,self.font)
                 self.tree.SetItemImage(itm,self.image)
-                self.tree.GetItemData(itm).SetData(self.data)
+                self.tree.SetItemPyData(itm,self.data)
                 if self.expand: self.tree.Expand(itm)
     
     def GetItemAttribute(self,attr):

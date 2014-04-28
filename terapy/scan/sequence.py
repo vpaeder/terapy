@@ -25,7 +25,8 @@
 from terapy.scan.base import ScanEvent
 import wx
 from terapy.core import icon_path
-from wx.lib.pubsub import Publisher as pub
+from wx.lib.pubsub import setupkwargs
+from wx.lib.pubsub import pub
 
 class Sequence(ScanEvent):
     """
@@ -45,7 +46,7 @@ class Sequence(ScanEvent):
         itmlist = self.get_children()
         for x in itmlist:
             if self.can_run:
-                ev = self.host.GetItemData(x).GetData()
+                ev = self.host.GetItemPyData(x)
                 if ev.is_active:
                     if ev.is_display or ev.is_save:
                         ev.run(data)

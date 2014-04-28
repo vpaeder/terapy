@@ -82,10 +82,10 @@ class HDF5(FileFilter):
 		dset.attrs['Number of axes'] = len(arr.axes)
 		for m in range(len(arr.axes)):
 			try:
-				dset.attrs['Axis '+str(m)] = "%s" % arr.axes[m]
+				dset.attrs['Axis '+str(m)] = "%s" % arr.axes[m].extended()
 			except:
 				dset.attrs['Axis '+str(m)] = ""
 			dset.attrs['Coordinates '+str(m)] = arr.coords[m]
-		dset.attrs['Input'] = "%s" % (arr.input)
+		dset.attrs['Input'] = "%s" % (arr.input.extended())
 		dset.attrs['Time'] = strftime("%d-%m-%Y %H:%M:%S", localtime())
 		f.close()

@@ -8,7 +8,7 @@ except:
 	pass
 
 setup(name='terapy',
-      version='2.00b5',
+      version='2.00b7',
       description='Graphical interface for scientific measurements',
       author='Vincent Paeder, Daniel Dietze',
       author_email='vincent.paeder@tuwien.ac.at',
@@ -18,5 +18,5 @@ setup(name='terapy',
       package_data={'terapy':['icons/*.png','icons/*.ico']},
       entry_points={'console_scripts':['terapy = tera:main']},
 	  console=['tera.py'],
-	  install_requires=['wxPython','matplotlib','numpy','scipy','quantities','h5py', 'xlrd', 'xlwt', 'xlutils' ,'statsmodels', 'pyWavelets', 'pandas' ,'PyVISA'],
+	  install_requires=['wxPython','matplotlib','numpy','scipy','pint','h5py', 'xlrd', 'xlwt', 'xlutils' ,'statsmodels', 'pyWavelets', 'pandas' ,'PyVISA'],
 )

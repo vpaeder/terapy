@@ -35,7 +35,8 @@ from terapy.core import check_py, filter_file
 from terapy.core.parsexml import ParseAttributes
 from terapy.core.dataman import DataArray
 from terapy.core.axedit import AxisInfos
-from wx.lib.pubsub import Publisher as pub
+from wx.lib.pubsub import setupkwargs
+from wx.lib.pubsub import pub
 from xml.dom import minidom
 import wx
 
@@ -197,7 +198,7 @@ class FilterBank():
         doc.appendChild(croot)
         root = doc.createElement("filters")
         root.attributes["name"] = self.name
-        root.attributes["dimension"] = self.dim
+        root.attributes["dimension"] = str(self.dim)
         croot.appendChild(root)
         for n in range(len(self.filters)):
             ft = self.filters[n]
@@ -225,7 +226,7 @@ class FilterBank():
         self.filters.insert(pos,ft)
         if ft.is_reference:
             self.RecomputeReference()
-        pub.sendMessage("filter.change", self)
+        pub.sendMessage("filter.change", inst=self)
     
     def AppendFilter(self, ft):
         """
@@ -248,7 +249,7 @@ class FilterBank():
         
         """
         self.filters.pop(pos)
-        pub.sendMessage("filter.change", self)
+        pub.sendMessage("filter.change", inst=self)
     
     def __del__(self):
         """
@@ -292,8 +293,7 @@ class FilterBank():
             
             Parameters:
                 inst    -    array (DataArray)
-                             or pubsub event data
-                             inst.data must be DataArray
+                             or pubsub event data (DataArray)
         
         """
         if not(isinstance(inst,DataArray)):
@@ -320,7 +320,7 @@ class FilterBank():
                 ft.ref = narray
                 ft.source = array
                 if inst!=array:
-                    pub.sendMessage("filter.change", data=self) # send filter change notification with filter bank as object
+                    pub.sendMessage("filter.change", inst=self) # send filter change notification with filter bank as object
                 break
     
     def RecomputeReference(self):
@@ -344,14 +344,14 @@ class FilterBank():
         
         """
         # search for reference filter, remove if exist
-        if self in inst.data:
+        if self in inst:
             for n in range(len(self.filters)):
                 if self.filters[n].is_reference:
                     ft = self.filters.pop(n)
                     # recompute reference in children if one exists
                     for x in self.children:
                         x.RecomputeReference()
-                    pub.sendMessage("filter.change", data=self)
+                    pub.sendMessage("filter.change", inst=self)
                     return ft
             return None 
 
@@ -366,6 +366,7 @@ class FilterBank():
         """
         # apply all filters
         narray = array.Copy()
+        narray.source = array
         units = [x.units for x in narray.axes]
         units.append(narray.input.units)
 
@@ -376,6 +377,7 @@ class FilterBank():
         
         for n in range(len(narray.axes)): narray.axes[n].units = units[n]
         narray.input.units = units[-1]
+        
         return narray
     
     def GetUnits(self, units):
@@ -408,3 +410,6 @@ modules = parse_modules(__package__, curdir, Filter)
 from terapy.core import module_path
 if os.path.exists(module_path):
     modules.extend(parse_modules("custom.filter.", module_path, Filter))
+
+# sort modules by name, alphabetically
+modules.sort(key=lambda x:x.__extname__)

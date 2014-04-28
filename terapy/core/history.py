@@ -28,7 +28,8 @@ import os
 from terapy import files
 from terapy.core.dragdrop import HistoryDrop, HistoryDragObject
 from wx.lib.mixins.listctrl import ListCtrlAutoWidthMixin
-from wx.lib.pubsub import Publisher as pub 
+from wx.lib.pubsub import setupkwargs
+from wx.lib.pubsub import pub 
 from terapy.core import icon_path
 from terapy.icons import DataIconList
 from terapy.core.dataman import DataArray
@@ -79,7 +80,7 @@ class HistoryMixin(object):
          
         """
         self.map.clear()
-        pub.sendMessage("history.arrays", data=[])
+        pub.sendMessage("history.arrays", inst=[])
         event.Skip()
 
     def SetItemPyData(self, idp, data):
@@ -141,7 +142,7 @@ class HistoryMixin(object):
                 inst    -    pubsub event data
          
         """
-        pub.sendMessage("history.arrays", data=self.GetArrays())
+        pub.sendMessage("history.arrays", inst=self.GetArrays())
     
     def GetItemById(self, idx):
         """
@@ -301,6 +302,8 @@ class HistoryControl(wx.Panel):
         
         # controls
         self.list = HistoryList(self,-1,style=wx.LC_REPORT|wx.LC_EDIT_LABELS|wx.LC_NO_HEADER)
+        self.list.SetMaxSize((200,-1))
+        
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.sizer.Add(self.list, 1, wx.EXPAND|wx.ALL, 2)
         hbox = wx.BoxSizer(wx.HORIZONTAL)
@@ -333,7 +336,7 @@ class HistoryControl(wx.Panel):
         self.button_up.Bind(wx.EVT_BUTTON, lambda x:self.Move(-1),self.button_up)
         self.button_remove.Bind(wx.EVT_BUTTON,lambda x:self.Delete(self.list.GetFirstSelected()),self.button_remove)
         
-        pub.subscribe(self.SetReference, 'filter.change_reference')
+        pub.subscribe(self.ChangeReference, 'filter.change_reference')
         pub.subscribe(self.ClearReference, 'filter.clear_reference')
         pub.subscribe(self.OnPlotDeleted, 'plot.delete')
         pub.subscribe(self.SetColors, 'plot.color_change')
@@ -376,7 +379,7 @@ class HistoryControl(wx.Panel):
         pos = self.list.GetFirstSelected()
         ev = self.list.GetItemPyData(pos)
         # broadcast data
-        pub.sendMessage("history.drag_object", data=ev)
+        pub.sendMessage("history.drag_object", inst=ev)
         ds = wx.DropSource(self.list)
         p = HistoryDragObject()
         p.SetData(ev)
@@ -415,13 +418,14 @@ class HistoryControl(wx.Panel):
             # actualize canvas reference
             pub.sendMessage('request_canvas')
             #
-            pub.sendMessage("set_status_text","Loading old scan data...")
+            pub.sendMessage("set_status_text",inst="Loading old scan data...")
             for ff in files.modules:
                 data = None
-                try:
-                    data = ff().read(dialog.GetPath())
-                except:
-                    pass
+                if ff().can_read:
+                    try:
+                        data = ff().read(dialog.GetPath())
+                    except:
+                        pass
                 if data!=None:
                     break
             for x in data:
@@ -439,7 +443,7 @@ class HistoryControl(wx.Panel):
                     x.plot.SetName(x.name)
                 pub.sendMessage("plot.color_change")
                 #pub.sendMessage("history.post_process",data=x)
-        pub.sendMessage("set_status_text","Finished!")
+        pub.sendMessage("set_status_text",inst="Finished!")
         dialog.Destroy()
 
     def SetCanvas(self, inst):
@@ -451,7 +455,7 @@ class HistoryControl(wx.Panel):
                 inst    -    pubsub event data
         
         """
-        self.canvas = inst.data
+        self.canvas = inst
     
     def SetWindow(self, inst):
         """
@@ -462,7 +466,7 @@ class HistoryControl(wx.Panel):
                 inst    -    pubsub event data
         
         """
-        self.window = inst.data
+        self.window = inst
     
     def OnKeyPress(self, event=None):
         """
@@ -507,10 +511,10 @@ class HistoryControl(wx.Panel):
                 event    -    wx.Event
         
         """
-        if event.data==None: return
+        if event==None: return
         for n in range(self.list.GetItemCount()):
             arr = self.list.GetItemPyData(n)
-            if arr.plot==event.data:
+            if arr.plot==event:
                 arr.plot.Delete()
     
     def OnLeftClick(self, event = None):
@@ -568,7 +572,7 @@ class HistoryControl(wx.Panel):
             # if array has a xml image of event tree, propose reload
             if hasattr(arr,'xml'):
                 itm = menu.Append(wx.NewId(),"Reload event tree")
-                self.Bind(wx.EVT_MENU, lambda x: pub.sendMessage("history.reload_events", data=arr.xml), id=itm.Id)
+                self.Bind(wx.EVT_MENU, lambda x: pub.sendMessage("history.reload_events", string=arr.xml), id=itm.Id)
             # specific menu entries for 1D plot
             if len(arr.shape) == 1:
                 itm = menu.Append(wx.NewId(), "Change c&olor")
@@ -584,9 +588,10 @@ class HistoryControl(wx.Panel):
                     if self.list.IsReference(event.GetIndex()):
                         itm = menu.Append(wx.NewId(), "&Clear reference")
                         self.Bind(wx.EVT_MENU, self.ClearReference, id=itm.Id)
-                    if self.canvas.CurrentPage.is_filter:
-                        itm = menu.Append(wx.NewId(), "S&et as reference")
-                        self.Bind(wx.EVT_MENU, lambda x: self.SetReference(event.GetIndex()), id=itm.Id)
+                    if self.canvas.CurrentPage!=None:
+                        if self.canvas.CurrentPage.is_filter:
+                            itm = menu.Append(wx.NewId(), "S&et as reference")
+                            self.Bind(wx.EVT_MENU, lambda x: self.SetReference(event.GetIndex()), id=itm.Id)
             
         self.PopupMenu(menu)
 
@@ -619,7 +624,7 @@ class HistoryControl(wx.Panel):
         if arr.plot!=None:
             col = arr.plot.GetColor()
         else:
-            col = wx.Color(0,0,0)
+            col = wx.Colour(0,0,0)
         data.SetColour(col)
         dlg = wx.ColourDialog(self,data)
         if dlg.ShowModal()==wx.ID_OK:
@@ -679,30 +684,40 @@ class HistoryControl(wx.Panel):
         # return modified name
         return name
     
-    def SetReference(self, position):
+    def SetReference(self, inst):
         """
         
             Set selected item as reference.
             
             Parameters:
-                position    -    item position (int)
+                inst    -    item position (int)
+                             or pubsub data (DataArray)
         
         """
-        if not(isinstance(position,int)):
-            if isinstance(position.data,DataArray):
+        self.TagAsReference(inst)
+        self.ChangeReference(inst)
+        arr = self.list.GetItemPyData(inst)
+        pub.sendMessage('history.set_reference', inst=arr)
+    
+    def ChangeReference(self, inst):
+        """
+        
+            Set selected item as reference.
+            
+            Parameters:
+                inst    -    item position (int)
+                             or pubsub data (DataArray)
+        
+        """
+        if not(isinstance(inst,int)):
+            if isinstance(inst,DataArray):
                 for n in range(self.list.GetItemCount()):
                     arr = self.list.GetItemPyData(n)
-                    if arr == position.data:
-                        position = n
+                    if arr == inst:
+                        inst = n
                         break
-            else:
-                position = position.data
-            message = 'history.change_reference'
-        else:
-            message = 'history.set_reference'
-        self.TagAsReference(position)
-        arr = self.list.GetItemPyData(position)
-        pub.sendMessage(message, data=arr)
+        self.TagAsReference(inst)
+        arr = self.list.GetItemPyData(inst)
     
     def TagAsReference(self, position, state=True):
         """
@@ -731,26 +746,26 @@ class HistoryControl(wx.Panel):
             self.list.ClearReference(position)
             self.list.SetItemImage(position,1)
     
-    def ClearReference(self, event=None):
+    def ClearReference(self, inst=None):
         """
         
             Clear reference status of selected item.
              
             Parameters:
-                event    -    wx.Event
+                inst    -    wx.Event or pubsub data (DataArray)
         
         """
-        if isinstance(event,wx.Event): # action came from menu
+        if isinstance(inst,wx.Event): # action came from menu
             idp = self.list.GetFirstSelected()
         else: # action came from external source through pubsub
             idp = -1
             for n in range(self.list.GetItemCount()):
-                if self.list.GetItemPyData(n) == event.data:
+                if self.list.GetItemPyData(n) == inst:
                     idp = n
                     break
         if idp>-1:
             self.list.SetItemImage(idp,1)
-            pub.sendMessage('history.clear_reference',self.list.GetReferenceBank(idp))
+            pub.sendMessage('history.clear_reference',inst=self.list.GetReferenceBank(idp))
             self.list.ClearReference(idp)
     
     def SaveAs(self, position):
@@ -766,7 +781,8 @@ class HistoryControl(wx.Panel):
         
         if dlg.ShowModal() == wx.ID_OK:
             arr = self.list.GetItemPyData(position)
-            flt = files.modules[dlg.GetFilterIndex()]()
+            save_modules = [x for x in files.modules if x().can_save]
+            flt = save_modules[dlg.GetFilterIndex()]()
             flt.save(dlg.GetPath(),self.list.GetItemPyData(position))
             plt = arr.plot
             n = 0
@@ -814,7 +830,7 @@ class HistoryControl(wx.Panel):
                 arr.name = event.Text
                 if arr.plot!=None: arr.plot.SetName(arr.name)
                 
-    def SetColors(self, event):
+    def SetColors(self, event = None):
         """
         
             Set colors of items in list from associate data arrays.
@@ -829,7 +845,7 @@ class HistoryControl(wx.Panel):
             f = self.list.GetItemFont(n)
             f.SetPointSize(10)
             f.SetWeight(wx.FONTWEIGHT_NORMAL)
-            col = wx.Color(0,0,0)
+            col = wx.Colour(0,0,0)
             if array.plot!=None:
                 f.SetWeight(wx.FONTWEIGHT_BOLD)
                 col = array.plot.GetColor()

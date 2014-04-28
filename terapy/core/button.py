@@ -38,7 +38,7 @@ class RunButton(wx.BitmapButton):
             Initialization.
         
         """
-        if wx.Platform == '__WXMSW__' and platform.win32_ver()[0]=='XP':
+        if wx.Platform == '__WXMSW__' and platform.win32_ver()[0]=='XP' and wx.VERSION[0]<3:
             self.image = [wx.Image(icon_path + "scan-stop-win.png"),wx.Image(icon_path + "scan-start-win.png")]
         else:
             self.image = [wx.Image(icon_path + "scan-stop.png"),wx.Image(icon_path + "scan-start.png")]

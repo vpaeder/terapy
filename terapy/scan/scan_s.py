@@ -62,9 +62,8 @@ class Scan(ScanEvent):
         ax.prepareScan()
         # scan selected axis from min to max
         coords = linspace(self.min,self.max,self.N)
-        n=-1
-        while self.can_run and n<self.N-1:
-            n+=1
+        n=0
+        while self.can_run and n<self.N:
             ax.goTo(coords[n])
             
             while (ax.get_motion_status() != 0 and self.can_run):
@@ -74,6 +73,7 @@ class Scan(ScanEvent):
             
             self.run_children(data)
             data.Increment(self.m_ids)
+            n+=1
 
         data.DecrementScanDimension(self.m_ids)
         data.Decrement(self.m_ids)

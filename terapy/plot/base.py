@@ -24,7 +24,8 @@
 
 import wx
 from terapy.core.axedit import ConvertUnits, FormatUnits
-from wx.lib.pubsub import Publisher as pub
+from wx.lib.pubsub import setupkwargs
+from wx.lib.pubsub import pub
 
 class PlotCanvas(wx.Panel):
     """
@@ -277,7 +278,7 @@ class Plot():
         """
         self.canvas = canvas
         self.array = array
-        self.color = wx.Color(0,0,0)
+        self.color = wx.Colour(0,0,0)
         self.plot = None
         self.children = [] # plots associated to this one (e.g. post-processed plots)
         self.source = None # master plot
@@ -313,10 +314,10 @@ class Plot():
                 col    -    color (wx.Color)
         
         """
-        if isinstance(col,wx.Color):
+        if isinstance(col,wx.Colour):
             self.color = col
         elif isinstance(col,tuple):
-            self.color = wx.Color(int(col[0]*255),int(col[1]*255),int(col[2]*255))
+            self.color = wx.Colour(int(col[0]*255),int(col[1]*255),int(col[2]*255))
         #if self.array!=None: self.array.color = col
     
     def GetColor(self):

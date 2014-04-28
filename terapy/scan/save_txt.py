@@ -44,13 +44,21 @@ class Save_TXT(SaveBase):
         fname = fname.split(".")
         ext = fname[-1]
         fname.append("")
+        if self.backup and hasattr(self,'bfname'):
+            bfname = self.bfname.split(".")
+            bfname.append("")
         
         for n in range(self.m_id+1): # save what has been measured before calling 'save'
             fname[-2] = str(n+1)
             fname[-1] = ext
             data.data[n].filename = ".".join(fname)
             self.filter.save(".".join(fname), data.data[n])
-
+            
+            if self.backup and hasattr(self,'bfname'):
+                bfname[-2] = str(n+1)
+                bfname[-1] = ext
+                self.filter.save(".".join(bfname), data.data[n])
+    
     def check_validity(self, data):
         v = len(data.shape)
         if v<1 or v>2:

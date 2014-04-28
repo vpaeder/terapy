@@ -161,28 +161,31 @@ class Text(FileFilter):
 		fname[-1] = "txt"
 		f = open(".".join(fname), 'w')
 		f.write("Information for scan from %s\n\n" % (strftime("%d.%m.%Y, %H:%M:%S", localtime())))
-		f.write("Input device:\n\t%s\n" % (arr.input))
+		try:
+			f.write("Input device:\n\t%s\n" % (arr.input.extended()))
+		except:
+			f.write("Input device:\n\t%s\n" % (""))
 		if len(arr.shape)==1:
 			try:
-				f.write("Axis device:\n\t%s\n" % (arr.axes[0]))
+				f.write("Axis device:\n\t%s\n" % (arr.axes[0].extended()))
 			except:
 				f.write("Axis device:\n\t%s\n" % (""))
 		elif len(arr.shape)==2:
 			try:
-				f.write("Axis X device:\n\t%s\n" % (arr.axes[0]))
-				f.write("Axis Y device:\n\t%s\n" % (arr.axes[1]))
+				f.write("Axis X device:\n\t%s\n" % (arr.axes[0].extended()))
+				f.write("Axis Y device:\n\t%s\n" % (arr.axes[1].extended()))
 			except:
 				f.write("Axis X device:\n\t%s\n" % (""))
 				f.write("Axis Y device:\n\t%s\n" % (""))
 		
 		f.write("\nScan parameters:\n")
 		if len(arr.shape)==1:
-			f.write("Range: " + str(min(arr.coords[0])) + " - " + str(max(arr.coords[0])))
+			f.write("Range: " + str(min(arr.coords[0])) + " - " + str(max(arr.coords[0]))  + "\n")
 			f.write("Steps: %f\n" % (arr.shape[0]))
 		elif len(arr.shape)==2:
-			f.write("X - Range: " + str(min(arr.coords[0])) + " - " + str(max(arr.coords[0])))
+			f.write("X - Range: " + str(min(arr.coords[0])) + " - " + str(max(arr.coords[0])) + "\n")
 			f.write("X - Steps: %f\n" % (arr.shape[0]))
-			f.write("Y - Range: " + str(min(arr.coords[1])) + " - " + str(max(arr.coords[1])))
+			f.write("Y - Range: " + str(min(arr.coords[1])) + " - " + str(max(arr.coords[1])) + "\n")
 			f.write("Y - Steps: %f\n" % (arr.shape[1]))
 		f.close()
 		return True

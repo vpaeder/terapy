@@ -45,6 +45,15 @@ class Save_H5(SaveBase):
         f.create_dataset("Event tree",data=data.xml) # store event tree
         f.create_dataset("System state",data=data.systemState) # store system state
         f.close()
+        
+        if self.backup and hasattr(self,'bfname'):
+            f = h5.File(self.bfname,'w')
+            f.create_dataset("Event tree",data=data.xml) # store event tree
+            f.create_dataset("System state",data=data.systemState) # store system state
+            f.close()
+        
         for n in range(self.m_id+1): # save what has been measured before calling 'save'
             data.data[n].filename = fname
             self.filter.save(fname, data.data[n],name="M_"+str(n))
+            if self.backup and hasattr(self,'bfname'):
+                self.filter.save(self.bfname, data.data[n],name="M_"+str(n))

@@ -35,7 +35,8 @@ import wx
 import os
 import functools
 from time import sleep
-from wx.lib.pubsub import Publisher as pub
+from wx.lib.pubsub import setupkwargs
+from wx.lib.pubsub import pub
 
 class ScanEventList(wx.Panel):
     """
@@ -101,6 +102,7 @@ class ScanEventList(wx.Panel):
         self.Bind(wx.EVT_BUTTON, self.OnButtonRun, self.button_run)
         pub.subscribe(self.OnStopMeasurement, "scan.after")
         pub.subscribe(self.ParseXMLFromString, "history.reload_events")
+        pub.subscribe(self.OnSaveDefaultEvents, "scan.save_default")
 
         self.list_events.SetDropTarget(EventDrop(self.OnEndDrag))
         
@@ -157,7 +159,7 @@ class ScanEventList(wx.Panel):
             doc.appendChild(croot)
             root = doc.createElement("events")
             croot.appendChild(root)
-        ev = self.list_events.GetItemData(itm).GetData()
+        ev = self.list_events.GetItemPyData(itm)
         p = doc.createElement("item")
         root.appendChild(p)
         p.attributes["name"] = self.list_events.GetItemText(itm)
@@ -230,7 +232,10 @@ class ScanEventList(wx.Panel):
         self.list_events.SetItemFont(nitm,f)
         self.list_events.SetItemPyData(nitm,ev)
         if expand:
-            self.list_events.Expand(root)
+            if wx.Platform == '__WXMSW__': # can't expand/collapse hidden root node with Windows
+                pass # TODO: implement a "manual" expand of children
+            else:
+                self.list_events.Expand(root)
         ev.refresh()
         ev.populate()
         return nitm
@@ -245,11 +250,11 @@ class ScanEventList(wx.Panel):
         
         """
         itm = event.GetItem()
-        ev = self.list_events.GetItemData(itm).GetData()
+        ev = self.list_events.GetItemPyData(itm)
         if not(isinstance(ev,ScanEvent)): # if not event object, find parent event object
             while not(isinstance(ev,ScanEvent)):
                 itm = self.list_events.GetItemParent(itm)
-                ev = self.list_events.GetItemData(itm).GetData()
+                ev = self.list_events.GetItemPyData(itm)
             itm0 = event.GetItem()
             propNode = self.list_events.GetItemChildren(itm, PropertyNode)[0] # get property node
             if itm0 == propNode:
@@ -262,7 +267,7 @@ class ScanEventList(wx.Panel):
             else: # edit with associated editor
                 p = self.list_events.GetItemChildren(propNode).index(itm0)
                 self.list_events.SetItemText(itm0, str(ev.propNodes[p]))
-                self.list_events.GetItemData(itm0).SetData([ev,p])
+                self.list_events.SetItemPyData(itm0,[ev,p])
                 ev.edit_label(event,p)
         else: # if event object, name can be edited as is
             event.Skip()
@@ -277,16 +282,18 @@ class ScanEventList(wx.Panel):
         
         """
         itm = event.GetItem()
-        ev = self.list_events.GetItemData(itm).GetData()
+        ev = self.list_events.GetItemPyData(itm)
         if isinstance(ev,list): # the edited item is a property node
             event.Veto()
-            self.list_events.GetItemData(itm).SetData(None)
+            self.list_events.SetItemPyData(itm,None)
             ev[0].set_property(ev[1],event.GetLabel())
         elif isinstance(ev,ScanEvent):
             ev.name = event.GetLabel()
         else:
             event.Skip()
-        self.list_events.SelectItem(self.list_events.GetNextSibling(itm))
+        itm = self.list_events.GetNextSibling(itm)
+        if itm.IsOk():
+            self.list_events.SelectItem(itm)
         self.SetFocus()
     
     def OnEventLeftClick(self, event = None):
@@ -313,7 +320,7 @@ class ScanEventList(wx.Panel):
                 event    -    wx.Event
         
         """
-        ev = self.list_events.GetItemData(event.GetItem()).GetData()
+        ev = self.list_events.GetItemPyData(event.GetItem())
         if hasattr(ev,'is_root'):
             if ev.is_root:
                 self.list_events.EditLabel(event.GetItem())
@@ -339,6 +346,7 @@ class ScanEventList(wx.Panel):
             self.menuPosition = event.GetPosition()
         
         itm = self.list_events.HitTest(self.menuPosition)[0]
+        
         menu = wx.Menu()
         menuAdd = wx.Menu()
         
@@ -350,7 +358,7 @@ class ScanEventList(wx.Panel):
                 menuAdd.AppendItem(mitem)
                 self.Bind(wx.EVT_MENU, functools.partial(self.OnAddEvent,obj), id=mitem.Id)
             elif itm.IsOk() and obj.is_visible:
-                ev = self.list_events.GetItemData(itm).GetData()
+                ev = self.list_events.GetItemPyData(itm)
                 if isinstance(ev,ScanEvent):
                     if (ev.is_loop or ev.is_root) and not(obj.is_root):
                         menuAdd.AppendItem(mitem)
@@ -359,14 +367,13 @@ class ScanEventList(wx.Panel):
         if menuAdd.GetMenuItemCount()>0:
             menu.AppendSubMenu(menuAdd,"&Add...")
         
-        if self.list_events.GetItemData(self.list_events.Selection).GetData()!=None or itm.IsOk():
+        if itm.IsOk():
+            # add options in case the clicked item is valid
             mitem = menu.Append(id=wx.NewId(),text="&Remove")
             self.Bind(wx.EVT_MENU, self.OnRemoveEvent, id=mitem.Id)
             mitem = menu.Append(id=wx.NewId(),text="&Rename")
             self.Bind(wx.EVT_MENU, lambda x: self.list_events.EditLabel(self.list_events.Selection), id=mitem.Id)
-        # if right-click is above an item, add enable/disable menu option
-        if itm.IsOk():
-            ev = self.list_events.GetItemData(itm).GetData()
+            ev = self.list_events.GetItemPyData(itm)
             if not(hasattr(ev, "is_active")):
                 return # not an editable menu item
             # fill replace options with similar items
@@ -383,7 +390,7 @@ class ScanEventList(wx.Panel):
                 menu.AppendSubMenu(menuRep, "Replace &with...")
             
             if not(ev.is_root):
-                if self.list_events.GetItemData(itm).GetData().is_active:
+                if self.list_events.GetItemPyData(itm).is_active:
                     mitem = menu.Append(id=wx.NewId(), text="&Disable")
                 else:
                     mitem = menu.Append(id=wx.NewId(), text="&Enable")
@@ -434,7 +441,7 @@ class ScanEventList(wx.Panel):
                 string    -    XML tree in string format (str)
         
         """
-        if not(isinstance(string,str)):
+        if not(isinstance(string,str)) and not(isinstance(string,unicode)):
             string = string.data
         from xml.dom import minidom
         xmldoc = minidom.parseString(string).getElementsByTagName('events')
@@ -461,7 +468,36 @@ class ScanEventList(wx.Panel):
             doc.writexml(f,indent="  ", addindent="  ", newl="\n")
             f.close()
             dialog.Destroy()
-
+    
+    def OnSaveDefaultEvents(self, inst=None):
+        """
+        
+            Save current list of events as default.
+            
+            Parameters:
+                inst    -    pubsub argument (not used)
+        
+        """
+        if event_file==None:
+            pub.sendMessage("set_status_text",inst="No event file defined. Can't save!")
+            return # no event file defined, can't save
+        # get list of sequences
+        sqs = self.list_events.GetItemChildren(self.list_events.GetRootItem(),ScanEvent)
+        doc = None
+        for seq in sqs:
+            if doc==None:
+                doc = self.BuildXMLTree(seq)
+            else:
+                self.BuildXMLTree(seq, doc.childNodes[0].childNodes[0],doc)
+        
+        try:
+            f = open(event_file,"w")
+            doc.writexml(f,indent="  ", addindent="  ", newl="\n")
+            f.close()
+            pub.sendMessage("set_status_text",inst="Default events saved.")
+        except:
+            pub.sendMessage("set_status_text",inst="Can't write in event file!")
+    
     def OnReplaceEvent(self, old, new, event):
         """
         
@@ -480,7 +516,7 @@ class ScanEventList(wx.Panel):
                 pass
         new.host = old.host
         itm = self.list_events.FindItem(old)
-        self.list_events.GetItemData(itm).SetData(new)
+        self.list_events.SetItemPyData(itm,new)
         new.name = new.__extname__
         self.list_events.SetItemText(itm,new.name)
         new.refresh()
@@ -580,12 +616,15 @@ class ScanEventList(wx.Panel):
                 itm    -    root item for sequence (wx.TreeItem)
         
         """
+        # disable controls
+        self.ToggleControls(False)
+        
         # refresh events
         self.RefreshEvents()
         
         # initialize data tree
         stree = self.list_events.GetItemSubTree(itm, ScanEvent)
-        ev = self.list_events.GetItemData(itm).GetData()
+        ev = self.list_events.GetItemPyData(itm)
         meas = Measurement(stree.data.name,stree)
         meas.BuildDataTree()
         
@@ -593,6 +632,7 @@ class ScanEventList(wx.Panel):
         self.plot_or_save = [False]*meas.count
         if not(self.CheckValidity(stree,meas)):
             print "Invalid event tree!"
+            self.ToggleControls(True)
             return
         del self.plot_or_save
         
@@ -605,11 +645,8 @@ class ScanEventList(wx.Panel):
         doc = hardware.get_system_state()
         meas.systemState = doc.toprettyxml(indent="  ", newl="\n")
         
-        # disable controls
-        self.ToggleControls(False)
-        
         # announce measurement start
-        pub.sendMessage("scan.start", data=meas)
+        pub.sendMessage("scan.start", inst=meas)
         
         self.scanThread = ScanThread(ev, meas)
         self.scanThread.start()
@@ -623,7 +660,7 @@ class ScanEventList(wx.Panel):
                 itm    -    tree item (wx.TreeItem)
         
         """
-        ev = self.list_events.GetItemData(itm).GetData()
+        ev = self.list_events.GetItemPyData(itm)
         ev.is_active = not(ev.is_active)
         f = self.list_events.GetItemFont(itm)
         f.SetPointSize(10)
@@ -660,8 +697,8 @@ class ScanEventList(wx.Panel):
                 event -    wx.Event
         
         """
+        itm = self.list_events.HitTest(self.menuPosition)[0]
         if ev.set():
-            itm = self.list_events.HitTest(self.menuPosition)[0]
             if not(itm.IsOk()):
                 itm = self.list_events.GetRootItem()
             self.InsertItem(ev, itm)
@@ -676,7 +713,7 @@ class ScanEventList(wx.Panel):
         
         """
         pos = event.GetItem()
-        ev = self.list_events.GetItemData(pos).GetData()
+        ev = self.list_events.GetItemPyData(pos)
         if isinstance(ev,ScanEvent):
             self.drag_object = pos
             ds = wx.DropSource(self.list_events)
@@ -703,7 +740,7 @@ class ScanEventList(wx.Panel):
         oitm = self.drag_object
         stree = self.list_events.GetItemSubTree(oitm)
         # target item
-        ev = self.list_events.GetItemData(ditm).GetData()
+        ev = self.list_events.GetItemPyData(ditm)
         
         if not(isinstance(ev, ScanEvent)):
             # target is not a ScanEvent instance, search for previous ScanEvent entry
@@ -713,10 +750,10 @@ class ScanEventList(wx.Panel):
                     titm = self.list_events.GetPrevSibling(titm)
                 else:
                     titm = self.list_events.GetItemParent(titm)
-                if isinstance(self.list_events.GetItemData(titm).GetData(), ScanEvent):
+                if isinstance(self.list_events.GetItemPyData(titm), ScanEvent):
                     break
             ditm = titm
-            ev = self.list_events.GetItemData(ditm).GetData() 
+            ev = self.list_events.GetItemPyData(ditm) 
             
         if ev.is_loop or ev.is_root:
             # target item is a recipient item => dropped as child
@@ -726,24 +763,24 @@ class ScanEventList(wx.Panel):
             # item will be dropped before target
             titm = self.list_events.GetPrevSibling(ditm)
             while titm.IsOk():
-                if isinstance(self.list_events.GetItemData(titm).GetData(), ScanEvent):
+                if isinstance(self.list_events.GetItemPyData(titm), ScanEvent):
                     break
                 titm = self.list_events.GetPrevSibling(titm)
             parent = self.list_events.GetItemParent(ditm)
             if not(titm.IsOk()):
                 # previous ScanEvent item is the parent item, must find where to place
                 titm = self.list_events.GetFirstChild(parent)[0]
-                if not(isinstance(self.list_events.GetItemData(titm).GetData(),PropertyNode)):
+                if not(isinstance(self.list_events.GetItemPyData(titm),PropertyNode)):
                     # this ScanEvent instance doesn't have a property node
                     titm = parent
         # check that target is not a child of dropped item
-        dev = self.list_events.GetItemData(parent).GetData()
+        dev = self.list_events.GetItemPyData(parent)
         if stree.IsDataInTree(dev): return
         
         if stree.data.is_root:
             # if dropped item is root, placed before previous root item
             while titm.IsOk():
-                ev = self.list_events.GetItemData(titm).GetData()
+                ev = self.list_events.GetItemPyData(titm)
                 if isinstance(ev, ScanEvent):
                     if ev.is_root:
                         break
@@ -770,7 +807,7 @@ class ScanEventList(wx.Panel):
         
         """
         pos = self.list_events.Selection
-        if isinstance(self.list_events.GetItemData(pos).GetData(),ScanEvent):
+        if isinstance(self.list_events.GetItemPyData(pos),ScanEvent):
             self.list_events.MoveItemUp(pos,ScanEvent)
 
     def OnButtonDown(self, event = None):
@@ -783,7 +820,7 @@ class ScanEventList(wx.Panel):
         
         """
         pos = self.list_events.Selection
-        if isinstance(self.list_events.GetItemData(pos).GetData(),ScanEvent):
+        if isinstance(self.list_events.GetItemPyData(pos),ScanEvent):
             self.list_events.MoveItemDown(pos,ScanEvent)
 
     def OnButtonRun(self, event = None):
@@ -797,19 +834,19 @@ class ScanEventList(wx.Panel):
         """
         if self.scanThread == None:
             pos = self.list_events.GetSelection()
-            ev = self.list_events.GetItemData(pos).GetData()
+            ev = self.list_events.GetItemPyData(pos)
             while pos.IsOk():
                 if hasattr(ev,'is_root'):
                     if ev.is_root:
                         break
                 pos = self.list_events.GetItemParent(pos)
-                ev = self.list_events.GetItemData(pos).GetData()
+                ev = self.list_events.GetItemPyData(pos)
             if pos.IsOk():
                 self.OnRunSequence(pos)
         else:
             pub.sendMessage("scan.stop")
     
-    def OnStopMeasurement(self, event = None):
+    def OnStopMeasurement(self, inst = None):
         """
         
             Actions following stop measurement request.
@@ -839,4 +876,5 @@ class ScanEventList(wx.Panel):
         self.button_add.Enable(state)
         self.button_up.Enable(state)
         self.button_run.Switch(state)
+        pub.sendMessage("scan.toggle_controls", inst=state)
 

@@ -57,28 +57,29 @@ class Scan_ZZ(Scan):
         # scan selected axis from min to max
         coords = linspace(self.min,self.max,self.N)
         if self.fwd:
-            n=-1
-            while self.can_run and n<self.N-1:
-                n+=1
+            n=0
+            data.SetScanPosition(self.m_ids,n)
+            while self.can_run and n<self.N:
                 ax.goTo(coords[n])
                 while (ax.get_motion_status() != 0 and self.can_run):
                     sleep(0.01)
                 data.SetCoordinateValue(self.m_ids, ax.pos()) # read axis position
                 self.run_children(data)
                 data.Increment(self.m_ids)
+                n+=1
             data.Decrement(self.m_ids)
             data.DecrementScanDimension(self.m_ids)
         else:
-            n=self.N
-            data.SetScanPosition(self.m_ids,self.N-1)
-            while self.can_run and n>0:
-                n-=1
+            n=self.N-1
+            data.SetScanPosition(self.m_ids,n)
+            while self.can_run and n>=0:
                 ax.goTo(coords[n])
                 while (ax.get_motion_status() != 0 and self.can_run):
                     sleep(0.01)
                 data.SetCoordinateValue(self.m_ids, ax.pos()) # read axis position
                 self.run_children(data)
                 data.Decrement(self.m_ids)
+                n-=1
             data.Increment(self.m_ids)
             data.DecrementScanDimension(self.m_ids)
         self.fwd = not(self.fwd)

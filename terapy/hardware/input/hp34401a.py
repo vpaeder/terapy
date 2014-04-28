@@ -38,7 +38,7 @@ class HP34401A(InputDevice):
         self.timeout = 2
         self.instr = None        
         self.units = ["V"]
-        self.qtynames = [""]
+        self.qtynames = ["X"]
         self.holdoff = 0.0
         self.config = ['holdoff']
         

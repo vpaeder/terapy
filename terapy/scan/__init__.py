@@ -44,3 +44,6 @@ modules = parse_modules(__package__, curdir, ScanEvent)
 from terapy.core import module_path
 if os.path.exists(module_path):
     modules.extend(parse_modules("custom.scan.", module_path, ScanEvent))
+
+# sort modules by name, alphabetically
+modules.sort(key=lambda x:x.__extname__)

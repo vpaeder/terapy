@@ -24,7 +24,8 @@
 
 from terapy.plot.canvas1d import PlotCanvas1D
 import wx
-from wx.lib.pubsub import Publisher as pub
+from wx.lib.pubsub import setupkwargs
+from wx.lib.pubsub import pub
 import functools
 import wxmpl
 from terapy.core.axedit import AxisInfos, du
@@ -56,13 +57,17 @@ class PlotCanvasT(PlotCanvas1D):
                 event    -    wx.Event
         
         """
-        event.StopPropagation()
+        #event.StopPropagation()
+        #event.Skip()
+        PlotCanvas1D.OnLectDblClick(self, event)
         # this implements the goto-cursor-position functionality of the scan stage
         x, y = event.GetPositionTuple() 
         wh = self.GetSize()
         axes = wxmpl.find_axes(self, x, wh[1] - y)    # mirror y coordinates to get proper orientation
-        # send position further
-        pub.sendMessage("plot.move_axis", data=axes[1]) 
+        
+        if axes[1]!=None:
+            # send position further
+            pub.sendMessage("plot.move_axis", inst=axes[1]) 
 
     def PopupMenuItems(self,menu):
         """

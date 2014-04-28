@@ -26,9 +26,12 @@
 # imports
 # wx for general GUI
 import wx
+from wx import aui
+import core, files, filters, hardware, icons, plot, scan
 from terapy.core.splitter import Splitter
 from terapy.core.menus import GetItemIds
-from wx.lib.pubsub import Publisher as pub
+from wx.lib.pubsub import setupkwargs
+from wx.lib.pubsub import pub
 # plotting and data treatment
 from terapy.filters.control import FilterControl
 from terapy.plot.notebook import PlotNotebook
@@ -42,8 +45,9 @@ from time import localtime, strftime
 from terapy.scan.control import ScanEventList
 from terapy.core.history import HistoryControl
 from terapy.core import icon_path
+import functools
 
-__version__         = "2.00b5 / 20.01.2014"
+__version__         = "2.00b8 / 28.04.2014"
 __doc_url__         = "http://pythonhosted.org/terapy/doc.html"
 
 class TeraPyMainFrame(wx.Frame):
@@ -65,7 +69,7 @@ class TeraPyMainFrame(wx.Frame):
         # statusbar
         self.CreateStatusBar(2)
         self.SetStatusWidths([-1, 180])
-        wx.CallAfter(pub.sendMessage,"set_status_text","Welcome to TeraPy")
+        wx.CallAfter(pub.sendMessage,"set_status_text",inst="Welcome to TeraPy")
         
         # restore device informations
         hardware.restore_hardware_info()
@@ -141,7 +145,11 @@ class TeraPyMainFrame(wx.Frame):
         if len(self.device_widgets)>0:
             # create splitter window and widget notebook
             self.split_window = Splitter(self.panel,-1,style=wx.SP_LIVE_UPDATE,proportion=0.85)
-            self.nb_widgets = wx.Notebook(self.split_window,-1,style=0)
+            self.nb_widgets = aui.AuiNotebook(self.split_window,style=aui.AUI_NB_TAB_SPLIT|aui.AUI_NB_TAB_MOVE|aui.AUI_NB_BOTTOM)
+            ap = aui.AuiSimpleTabArt()
+            self.nb_widgets.SetArtProvider(ap)
+            mgr = self.nb_widgets.GetAuiManager()
+            mgr.SetFlags(aui.AUI_MGR_ALLOW_ACTIVE_PANE|aui.AUI_MGR_DEFAULT)
             # replace plot notebook with splitter window in containing sizer
             sizer = self.notebook.Parent.GetSizer()
             if sizer!=None:
@@ -160,6 +168,14 @@ class TeraPyMainFrame(wx.Frame):
         # refresh interface
         if self.panel.GetSizer()!=None:
             self.panel.SetSizerAndFit(self.panel.GetSizer())
+            if self.IsMaximized():
+                self.Maximize(False)
+                self.Maximize(True)
+        
+        #if 'mgr' in locals():
+        #    cfg = wx.Config("TeraPy")
+        #    if cfg.Exists("Widgets"):
+        #        wx.CallAfter(mgr.LoadPerspective,cfg.Read("Widgets"))
         
     def __create_event_bindings(self):
         """
@@ -173,6 +189,7 @@ class TeraPyMainFrame(wx.Frame):
         pub.subscribe(self.OnStartMeasurement, "scan.start")
         pub.subscribe(self.SetStatusText, "set_status_text")
         pub.subscribe(self.OnStopMeasurement, "scan.after")
+        pub.subscribe(self.ToggleScanControls, "scan.toggle_controls")
         pub.subscribe(self.SetProgressValue, "progress_change")
         pub.subscribe(self.SetRefresh, "request_canvas")
         pub.subscribe(self.BroadcastWindow, "request_top_window")
@@ -193,13 +210,20 @@ class TeraPyMainFrame(wx.Frame):
         mitem = menuFile.Append(wx.NewId(), "&Default units")
         self.Bind(wx.EVT_MENU, self.OnDefaultUnits, id=mitem.Id)
         menuFile.AppendSeparator()
+        mitem = menuFile.Append(wx.NewId(), "&Save default events")
+        self.Bind(wx.EVT_MENU, self.OnSaveDefaultEvents, id=mitem.Id)
+        mitem = menuFile.Append(wx.NewId(), "&Save default filters")
+        self.Bind(wx.EVT_MENU, self.OnSaveDefaultFilters, id=mitem.Id)
+        menuFile.AppendSeparator()
         mitem = menuFile.Append(wx.NewId(), "E&xit")
         self.Bind(wx.EVT_MENU, self.OnQuit, id=mitem.Id)
         
         # hardware menu
         menuHardware = wx.Menu()
-        mitem = menuHardware.Append(wx.NewId(), "&Reset Current Devices")
+        mitem = menuHardware.Append(wx.NewId(), "&Reset current devices")
         self.Bind(wx.EVT_MENU, self.OnResetHardware, id=mitem.Id)
+        mitem = menuHardware.Append(wx.NewId(), "&Reload device list")
+        self.Bind(wx.EVT_MENU, self.OnReloadHardware, id=mitem.Id)
         mitem = menuHardware.Append(wx.NewId(), "&Scan Hardware...")
         self.Bind(wx.EVT_MENU, self.OnScanHardware, id=mitem.Id)
         menuConfigMain = wx.Menu()
@@ -303,7 +327,7 @@ class TeraPyMainFrame(wx.Frame):
         # top level sizers
         hbox0 = wx.BoxSizer(wx.HORIZONTAL)
         hbox0.Add(vbox0, 0, wx.EXPAND|wx.ALL, 2) # x|o|o
-        if self.split_window !=None:
+        if self.split_window !=None: # when device widgets are present
             hbox0.Add(self.split_window,1,wx.EXPAND) # o|x|o
         else:  
             hbox0.Add(self.notebook, 1, wx.EXPAND) # o|x|o
@@ -318,13 +342,13 @@ class TeraPyMainFrame(wx.Frame):
         
         # attach main sizer to panel to adjust element sizes
         self.panel.SetAutoLayout(True)
-        self.panel.SetSizer(hbox0)
+        self.panel.SetSizerAndFit(hbox0)
         hbox0.Fit(self.panel)
         hbox0.SetSizeHints(self.panel)
         
         self.Fit()
         self.Maximize()
-    
+        
     def SetStatusText(self, inst=None):
         """
         
@@ -340,7 +364,7 @@ class TeraPyMainFrame(wx.Frame):
         else:
             wx.Frame.SetStatusText(self,inst.data)
             
-    def SetRefresh(self, inst):
+    def SetRefresh(self, inst = None):
         """
         
             Report on the state of the "automatic update" checkbox through pubsub.
@@ -350,20 +374,21 @@ class TeraPyMainFrame(wx.Frame):
         
         """
         # needed to report auto update flag
-        pub.sendMessage("broadcast_refresh",data=self.auto_update.GetValue())
+        pub.sendMessage("broadcast_refresh",inst=self.auto_update.GetValue())
     
-    def OnStartMeasurement(self, event=None):
+    def OnStartMeasurement(self, inst=None):
         """
         
             Actions preceding a new measurement.
             
             Parameters:
-                event    -    event object (wx.Event)
+                inst    -    pubsub data (Measurement)
         
         """
-        meas = event.data
+        meas = inst
         # disable controls
         self.ToggleScanControls(False)
+        
         # stop axis/input display update
         self.StopDeviceTimer()
         
@@ -379,20 +404,20 @@ class TeraPyMainFrame(wx.Frame):
                 meas.data[n].xml = meas.xml # copy xml tree for easier access
         
         # set status bar
-        pub.sendMessage("set_status_text","Scan sequence \""+meas.name+"\" started at " + strftime("%H:%M:%S", localtime()))
+        pub.sendMessage("set_status_text",inst="Scan sequence \""+meas.name+"\" started at " + strftime("%H:%M:%S", localtime()))
         self.is_scanning = True
         
     
-    def SetProgressValue(self, event):
+    def SetProgressValue(self, inst):
         """
         
             Set progress bar value from pubsub event.
             
             Parameters:
-                event    -    event object (wx.Event)
+                inst    -    pubsub data (float)
         
         """
-        value = event.data
+        value = inst
         if value < 0:
             value = 0
         if value > 100:
@@ -419,7 +444,14 @@ class TeraPyMainFrame(wx.Frame):
                 event    -    event object (wx.Event)
         
         """
-        self.StopDeviceTimer()
+        self.StopDeviceTimer(destroy=True)
+        # store widget positions
+        if hasattr(self,'nb_widgets'):
+            if self.nb_widgets!=None:
+                cfg = wx.Config("TeraPy")
+                mgr = self.nb_widgets.GetAuiManager()
+                cfg.Write("Widgets",mgr.SavePerspective())
+        
         # stop scan thread
         if not(self.is_scanning):
             pub.unsubAll()
@@ -476,7 +508,29 @@ class TeraPyMainFrame(wx.Frame):
                 du[x.name] = x.units
             pub.sendMessage("default_units.changed")
         dlg.Destroy()
-
+    
+    def OnSaveDefaultEvents(self, event):
+        """
+        
+            Send request to save default events.
+            
+            Parameters:
+                event    -    event object (wx.Event)
+        
+        """
+        pub.sendMessage("scan.save_default")
+    
+    def OnSaveDefaultFilters(self, event):
+        """
+        
+            Send request to save default filters.
+            
+            Parameters:
+                event    -    event object (wx.Event)
+        
+        """
+        pub.sendMessage("filter.save_default")
+    
     def OnResetHardware(self, event = None):
         """
         
@@ -517,37 +571,37 @@ class TeraPyMainFrame(wx.Frame):
         """
         pub.sendMessage("load_data")
                     
-    def ToggleScanControls(self, state = True):
+    def ToggleScanControls(self, inst = True):
         """
         
             Enable/Disable interface elements.
             
             Parameters:
-                state    -    state (bool)
+                inst    -    state (bool)
         
         """
         # enable menus
-        self.menuBar.EnableTop(0, state)
-        self.menuBar.EnableTop(1, state)
+        self.menuBar.EnableTop(0, inst)
+        self.menuBar.EnableTop(1, inst)
         # enable widgets
         for x in self.device_widgets:
-            x.Enable(state)
+            x.Enable(inst)
         
-    def OnStopMeasurement(self, event = None):
+    def OnStopMeasurement(self, inst = None):
         """
         
             Actions following the end of a measurement.
             
             Parameters:
-                event    -    event object (wx.Event)
+                inst    -    pubsub data (Measurement)
         
         """
-        meas = event.data
+        meas = inst
         # swap buttons' status
         self.ToggleScanControls(True)
         
         # status bar
-        pub.sendMessage("set_status_text","Scan finished")
+        pub.sendMessage("set_status_text",inst="Scan finished")
         
         # update plots
         for x in meas.data:
@@ -558,23 +612,50 @@ class TeraPyMainFrame(wx.Frame):
         self.StartDeviceTimer()
         self.is_scanning = False
     
-    def SetAxisFromPlot(self, event):
+    def SetAxisFromPlot(self, inst):
         """
         
             Set currently selected axis device to given position.
             This function is meant to be called by pubsub.
             
             Parameters:
-                event    -    event object (wx.Event)
+                inst    -    pubsub event
         
         """
         # set selected stage position
         if hasattr(self,'nb_widgets'):
             if self.nb_widgets!=None:
-                curwg = self.nb_widgets.CurrentPage
-                if hasattr(curwg,'axis'):
-                    curwg.SetValue(event.data)
+                curwg = self.nb_widgets.GetPage(self.nb_widgets.GetSelection())
+                if hasattr(curwg,'axis'): # currently selected widget corresponds to an axis device => set value
+                    curwg.SetValue(inst)
+                else: # currently selected widget is something else => need selection by user
+                    pitems = []
+                    menu = wx.Menu()
+                    for n in range(self.nb_widgets.GetPageCount()):
+                        cp = self.nb_widgets.GetPage(n)
+                        if hasattr(cp,'axis'):
+                            pitems.append(cp.axis)
+                            mitem = menu.Append(wx.NewId(),cp.axis.name)
+                            menu.Bind(wx.EVT_MENU, functools.partial(self.SetAxisFromPopupMenu,cp,inst), id=mitem.Id)
+                    self.PopupMenu(menu)
+    
+    def SetAxisFromPopupMenu(self, widget, pos, event=None):
+        """
         
+            Set given widget (axis device widget) to given position.
+            
+            Parameters:
+                widget    -    axis device widget (wx.Window)
+                pos       -    position (float)
+                event     -    for compliance as event callback (wx.Event)
+        
+        """
+        widget.SetValue(pos)
+        for n in range(self.nb_widgets.GetPageCount()):
+            if self.nb_widgets.GetPage(n) == widget:
+                self.nb_widgets.SetSelection(n)
+                break
+    
     def UpdateHardware(self):
         """
         
@@ -582,6 +663,26 @@ class TeraPyMainFrame(wx.Frame):
         
         """
         self.CreateHardwareConfigMenu()
+    
+    def OnReloadHardware(self, event):
+        """
+        
+            Trigger hardware reload.
+            This function is meant to be called from main menu.
+            
+            Parameters:
+                event    -    event object (wx.Event)
+        
+        """
+        if(wx.MessageBox("Are you sure? Connected devices will be re-initialized!", "Reload hardware", style=wx.YES | wx.NO) != wx.YES):
+            return
+        self.StopDeviceTimer(destroy=True)
+        hardware.restore_hardware_info()
+        hardware.initiate_hardware()
+        self.UpdateHardware()
+        self.CreateDeviceWidgets()
+        self.StartDeviceTimer()
+        pub.sendMessage("set_status_text",inst="Hardware reload finished.")
     
     def OnScanHardware(self, event):
         """
@@ -593,7 +694,7 @@ class TeraPyMainFrame(wx.Frame):
                 event    -    event object (wx.Event)
         
         """
-        if(wx.MessageBox("Are you sure? This will reset all hardware settings!", "Scan for Hardware", style=wx.YES | wx.NO) != wx.YES):
+        if(wx.MessageBox("Are you sure? This will reset all hardware settings!", "Scan for hardware", style=wx.YES | wx.NO) != wx.YES):
             return
     
         # stop input signal timer
@@ -612,7 +713,7 @@ class TeraPyMainFrame(wx.Frame):
             devlist = devlist + dev.ID + "_" + str(dev.axis) + ": " + dev.name + "\n"
             
         # display overview
-        dlg = wx.MessageDialog(self, devlist,caption="Found Hardware",style=wx.OK,pos=wx.DefaultPosition)
+        dlg = wx.MessageDialog(self, devlist,caption="Found hardware",style=wx.OK,pos=wx.DefaultPosition)
         dlg.ShowModal()
         dlg.Destroy()
         
@@ -622,6 +723,8 @@ class TeraPyMainFrame(wx.Frame):
         
         # restart device timer
         self.StartDeviceTimer()
+        
+        pub.sendMessage("set_status_text",inst="Hardware scan finished.")
     
     def OnConfigureInput(self, event):
         """
@@ -633,7 +736,8 @@ class TeraPyMainFrame(wx.Frame):
                 event    -    event object (wx.Event)
         
         """
-        mId = GetItemIds(event.GetEventObject()).index(event.GetId())
+        menuItem = self.menuBar.FindItemById(event.GetId())
+        mId = GetItemIds(menuItem.GetMenu()).index(event.GetId())
         self.StopDeviceTimer()                        # stop signal refresh        
         hardware.devices["input"][mId].configure()
         hardware.store_hardware_info()
@@ -649,7 +753,8 @@ class TeraPyMainFrame(wx.Frame):
                 event    -    event object (wx.Event)
         
         """
-        mId = GetItemIds(event.GetEventObject()).index(event.GetId())
+        menuItem = self.menuBar.FindItemById(event.GetId())
+        mId = GetItemIds(menuItem.GetMenu()).index(event.GetId())
         self.StopDeviceTimer()                        # stop signal refresh        
         hardware.devices["axis"][mId].configure()
         hardware.store_hardware_info()
@@ -671,16 +776,18 @@ class TeraPyMainFrame(wx.Frame):
         
         """
         for x in self.device_widgets:
-            x.timer.Start(250)
+            x.timer.pause(False)
         
-    def StopDeviceTimer(self):
+    def StopDeviceTimer(self,destroy=False):
         """
         
         Stop update timers for loaded devices
         
         """
         for x in self.device_widgets:
-            x.timer.Stop()
+            x.timer.pause(True)
+            if destroy:
+                x.timer.stop()
     
     def BroadcastWindow(self, inst=None):
         """
@@ -691,7 +798,7 @@ class TeraPyMainFrame(wx.Frame):
                 inst    -    pubsub event data (not used, but function normally called by pubsub)
         
         """
-        pub.sendMessage("broadcast_window", data=self)
+        pub.sendMessage("broadcast_window", inst=self)
 
 # launch application
 if __name__ == '__main__':

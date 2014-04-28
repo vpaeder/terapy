@@ -46,8 +46,8 @@ class Reset(ScanEvent):
     def refresh(self):
         ScanEvent.refresh(self)
         from terapy.hardware import devices
-        self.instrlist = devices['axis']
-        self.instrlist.extend(devices['input'])
+        self.instrlist = devices['axis'][:]
+        self.instrlist.extend(devices['input'][:])
     
     def run(self, data):
         if self.can_run:

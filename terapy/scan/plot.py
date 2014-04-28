@@ -25,7 +25,8 @@
 from terapy.scan.base import ScanEvent
 import wx
 from terapy.core import icon_path, refresh_delay
-from wx.lib.pubsub import Publisher as pub
+from wx.lib.pubsub import setupkwargs
+from wx.lib.pubsub import pub
 from time import time
 
 class Plot(ScanEvent):
@@ -52,10 +53,10 @@ class Plot(ScanEvent):
         pub.sendMessage("request_canvas")
     
     def set_canvas(self, inst=None):
-        self.canvas = inst.data
+        self.canvas = inst
     
     def set_refresh(self, inst=None):
-        self.auto_refresh = inst.data
+        self.auto_refresh = inst
     
     def run(self, data):
         arr = data.data[self.m_id]

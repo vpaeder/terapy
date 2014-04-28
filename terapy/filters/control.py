@@ -23,15 +23,16 @@
 """
 
 import numpy as np
-import wxmpl
 from pylab import Line2D
 import os
 import wx
 from terapy.core.dataman import DataArray
 from wx.lib.mixins.listctrl import ListCtrlAutoWidthMixin 
 from terapy.core import icon_path
+from terapy.core.plotpanel import PlotPanel
 from terapy.core.dragdrop import FilterDrop, FilterDragObject
-from wx.lib.pubsub import Publisher as pub
+from wx.lib.pubsub import setupkwargs
+from wx.lib.pubsub import pub
 from terapy.filters import GetModules, FilterBank
 import functools
 
@@ -63,11 +64,13 @@ class FilterControl(wx.Panel):
         
         """
         wx.Panel.__init__(self, parent)
-        self.bank = FilterBank()
+        self.bank = None
         self.dim = dim
         
         # filter list
         self.list = FilterList(self, -1, style=wx.LC_REPORT|wx.LC_NO_HEADER)
+        self.list.SetMaxSize((200,-1))
+        
         self.list.InsertColumn(0,"Name")
         self.img_list = wx.ImageList(16,16)
         from terapy.core.tooltip import ToolTip
@@ -81,7 +84,7 @@ class FilterControl(wx.Panel):
         
         # window preview
         self.label_plot = wx.StaticText(self, -1, "Apodization window")
-        self.plot_filter = wxmpl.PlotPanel(self, -1)
+        self.plot_filter = PlotPanel(self, -1)
         self.plot_filter.SetMaxSize((150,100))
         self.plot_filter.SetMinSize((150,100))
 
@@ -119,6 +122,7 @@ class FilterControl(wx.Panel):
         pub.subscribe(self.OnFilterUpdate, "plot.apply_filters")
         pub.subscribe(self.UpdateFilterDisplay, "plot.switch_canvas")
         pub.subscribe(self.RefreshFilters, "filter.change")
+        pub.subscribe(self.OnSaveDefaultFilters, "filter.save_default")
         
         # drag and drop enable
         self.list.SetDropTarget(FilterDrop(self.OnEndDrag))
@@ -154,11 +158,11 @@ class FilterControl(wx.Panel):
             Refresh displayed filter list.
             
             Parameters:
-                inst    -    pubsub event data
+                inst    -    pubsub event data (FilterBank)
         
         """
         if inst!=None:
-            if inst.data!=self.bank: return
+            if inst!=self.bank: return
         # store currently selected items
         sels = []
         itm = self.list.GetFirstSelected()
@@ -190,11 +194,10 @@ class FilterControl(wx.Panel):
             Set filter bank through pubsub.
             
             Parameters:
-                inst    -    pubsub event data
-                             inst.data must be of class FilterBank
+                inst    -    pubsub event data (FilterBank)
         
         """
-        self.bank = inst.data
+        self.bank = inst
         self.RefreshFilters()
     
     def EnableControl(self, inst):
@@ -203,11 +206,10 @@ class FilterControl(wx.Panel):
             Set control to given state (through pubsub)
             
             Parameters:
-                inst    -    pubsub event data
-                             inst.data must be boolean
+                inst    -    pubsub event data (bool)
         
         """
-        self.Enable(inst.data)
+        self.Enable(inst)
     
     def LoadFilterList(self, event=None, fname=""):
         """
@@ -242,6 +244,13 @@ class FilterControl(wx.Panel):
                 fname    -    file name (str)
         
         """
+        dlg = wx.TextEntryDialog(self,message="Filter bank name",defaultValue=self.bank.name)
+        if dlg.ShowModal()!=wx.ID_OK:
+            dlg.Destroy()
+            return
+        self.bank.name = dlg.GetValue()
+        dlg.Destroy()
+        
         if fname=="":
             dlg = wx.FileDialog(self, "Choose output file", os.getcwd(),"", "Configuration file (*.ini)|*.ini|All files (*.*)|*.*", wx.SAVE)
             if dlg.ShowModal() != wx.ID_OK:
@@ -250,6 +259,35 @@ class FilterControl(wx.Panel):
             fname = dlg.GetPath()
             dlg.Destroy()
         self.bank.SaveFilterList(fname)
+    
+    def OnSaveDefaultFilters(self, inst=None):
+        """
+        
+            Save current list of filters as default.
+            
+            Parameters:
+                inst    -    pubsub argument (not used)
+        
+        """
+        from terapy.core import filter_file
+        if filter_file==None:
+            pub.sendMessage("set_status_text",inst="No filter file defined. Can't save!")
+            return # no filter file defined, can't save
+        if self.bank==None:
+            pub.sendMessage("set_status_text",inst="No active filter bank. Can't save!")
+            return # filter control is empty, as no filter bank is active
+        
+        old_name = self.bank.name
+        self.bank.name = "Default filter bank"
+        
+        try:
+            self.bank.SaveFilterList(filter_file)
+            pub.sendMessage("set_status_text",inst="Default filters saved.")
+        except:
+            pub.sendMessage("set_status_text",inst="Can't write in filter file!")
+        
+        self.bank.name = old_name
+
     
     def OnFilterUpdate(self, inst=None):
         """
@@ -263,7 +301,7 @@ class FilterControl(wx.Panel):
         self.bank.RecomputeReference()
         for x in self.bank.children:
             x.RecomputeReference()
-        pub.sendMessage("filter.change", self.bank)
+        pub.sendMessage("filter.change", inst=self.bank)
     
     def OnFilterLeftClick(self, event = None):
         """
@@ -358,6 +396,7 @@ class FilterControl(wx.Panel):
                 event    -    wx.Event
         
         """
+        if self.bank==None: return
         # pop up menu with filter-related actions
         menuAdd = wx.Menu()
         modules = GetModules(self.dim)
@@ -439,7 +478,7 @@ class FilterControl(wx.Panel):
             ft = self.bank.filters.pop(pos)
             self.list.DeleteItem(pos)
             if ft.is_reference:
-                pub.sendMessage("filter.clear_reference", ft.source) # send clear reference message with ref array
+                pub.sendMessage("filter.clear_reference", inst=ft.source) # send clear reference message with ref array
         if len(sels)>0:
             # update display
             self.UpdateFilterDisplay()
@@ -473,21 +512,20 @@ class FilterControl(wx.Panel):
         self.UpdateFilterDisplay()
         self.OnFilterUpdate()
     
-    def SetReference(self, array):
+    def SetReference(self, inst):
         """
         
             Set given array as reference.
              
             Parameters:
-                array    -    data array (DataArray)
+                inst    -    data array (DataArray)
                               or pubsub event data
-                              (array.data must be of class DataArray)
         
         """
         # set reference from external source (i.e. not from filter control itself)
         # will act on currently displayed filter bank
-        if not(isinstance(array,DataArray)):
-            array = array.data
+        if not(isinstance(inst,DataArray)):
+            inst = inst.data
         
         # search for existing reference
         ref_ft = None
@@ -499,14 +537,23 @@ class FilterControl(wx.Panel):
         # if no reference, search for adequate filter and add to filter list
         if ref_ft==None:
             modules = GetModules(self.dim)
+            # build list of potential filters
+            flist = []
             for n in range(len(modules)):
                 ft = modules[n]()
                 if ft.is_reference:
-                    ft.source = array
-                    self.bank.AppendFilter(ft)
-                    break
+                    flist.append(ft)
+            if len(flist)==1: # if only one type exists, add this one
+                flist[0].source = inst
+                self.bank.AppendFilter(flist[0])
+            elif len(flist)>1: # otherwise, propose a list to the user
+                dlg = ReferenceFilterSelectionDialog(flist = flist)
+                if dlg.ShowModal() == wx.ID_OK:
+                    idx = dlg.GetValue()
+                    flist[idx].source = inst
+                    self.bank.AppendFilter(flist[idx])
         else:
-            ref_ft.source = array
+            ref_ft.source = inst
         
     def RemoveReference(self, inst=None):
         """
@@ -545,3 +592,25 @@ class FilterControl(wx.Panel):
         data_y = np.concatenate(([0.0,0.0], arr.data, [0.0,0.0]))
         self.line_filter.set_data(data_x, data_y)
         self.plot_filter.draw()
+
+class ReferenceFilterSelectionDialog(wx.Dialog):
+    def __init__(self, parent = None, title="Reference filter", flist = []):
+        wx.Dialog.__init__(self, parent, title=title)
+        self.label_flist = wx.StaticText(self, -1, "Filter name")
+        self.choice_flist = wx.Choice(self, -1, choices=[x.__extname__ for x in flist])
+        self.button_OK = wx.Button(self, wx.ID_OK)
+        self.button_Cancel = wx.Button(self, wx.ID_CANCEL)
+        
+        hbox = wx.BoxSizer(wx.HORIZONTAL)
+        hbox.AddStretchSpacer(1)
+        hbox.Add(self.button_Cancel, 0, wx.RIGHT|wx.ALIGN_RIGHT, 5)
+        hbox.Add(self.button_OK, 0, wx.RIGHT|wx.ALIGN_RIGHT, 5)
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(self.label_flist, 0, wx.ALL|wx.EXPAND, 2)
+        sizer.Add(self.choice_flist, 0, wx.ALL|wx.EXPAND, 2)
+        sizer.Add(hbox, 0, wx.ALL|wx.EXPAND, 2)
+        self.SetSizer(sizer)
+        self.Fit()
+    
+    def GetValue(self):
+        return self.choice_flist.GetSelection()

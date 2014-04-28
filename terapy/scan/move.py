@@ -176,7 +176,7 @@ class AxisSelectionDialog(wx.Dialog):
         
         """
         self.label_position.SetLabel(["Position:","Displacement:"][event.Selection])
-    
+        
     def GetValue(self):
         """
         

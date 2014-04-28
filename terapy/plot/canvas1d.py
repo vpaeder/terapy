@@ -24,14 +24,15 @@
 
 from terapy.plot.base import PlotCanvas
 from terapy.plot.plot1d import Plot1D
-from wx.lib.pubsub import Publisher as pub
+from wx.lib.pubsub import setupkwargs
+from wx.lib.pubsub import pub
 from terapy.filters import FilterBank
 from terapy.core.axedit import AxisInfos, ConvertUnits, FormatUnits, du
-import wxmpl
+from terapy.core.plotpanel import PlotPanel
 import matplotlib
 import wx
 
-class PlotCanvas1D(PlotCanvas,wxmpl.PlotPanel):
+class PlotCanvas1D(PlotCanvas,PlotPanel):
     """
     
         Canvas class for 1D plots
@@ -59,7 +60,7 @@ class PlotCanvas1D(PlotCanvas,wxmpl.PlotPanel):
                 yscale    -    ordinate scale type (linear or log)
         
         """
-        wxmpl.PlotPanel.__init__(self,parent,id)
+        PlotPanel.__init__(self,parent,id)
         PlotCanvas.__init__(self,parent,id)
         
         fig = self.get_figure()
@@ -80,44 +81,25 @@ class PlotCanvas1D(PlotCanvas,wxmpl.PlotPanel):
         self.labels = [xlabel, ylabel]
         self.SetLabels()
         
-        self.Bind(wx.EVT_LEFT_DCLICK, self.OnLeftClick, self)
-        self.Bind(wx.EVT_LEFT_DOWN, self.OnLeftClick, self)
+        self.Bind(wx.EVT_LEFT_DCLICK, self.OnLeftDblClick, self)
         self.Bind(wx.EVT_RIGHT_DOWN, self.OnRightClick, self)
     
-    def OnLeftClick(self, event):
+    def OnLeftDblClick(self, event):
         """
         
-            Actions triggered on left mouse button click.
+            Actions triggered on left mouse button double click.
             
             Parameters:
                 event    -    wx.Event
         
         """
-        # MPL plot canvas intercept double clicks
-        # Use another strategy:
-        #    - on 1st click, set a timer
-        #    - if timer triggers before 2nd click, resets
-        #    - if click happens before, consider as double click
-        if hasattr(self,'timer'):
-            self.timer.Stop()
-            del(self.timer)
-            dbl = True
-        else:
-            self.timer = wx.Timer()
-            self.timer.Bind(wx.EVT_TIMER, self.OnLeftClick, self.timer)
-            self.timer.Start(500)
-            dbl = False
-            event.Skip()
-        
-        if not(isinstance(event,wx.TimerEvent)):
-            if dbl or event.ButtonDClick():
-                x, y = self._get_canvas_xy(event)
-                evt = matplotlib.backend_bases.MouseEvent(1, self, x, y)
-                for ax in self.get_figure().get_axes(): 
-                    xlabel = ax.xaxis.get_label()
-                    ylabel = ax.yaxis.get_label()
-                    if xlabel.contains(evt)[0] or ylabel.contains(evt)[0]:
-                        self.EditAxes()
+        x, y = self._get_canvas_xy(event)
+        evt = matplotlib.backend_bases.MouseEvent(1, self, x, y)
+        for ax in self.get_figure().get_axes(): 
+            xlabel = ax.xaxis.get_label()
+            ylabel = ax.yaxis.get_label()
+            if xlabel.contains(evt)[0] or ylabel.contains(evt)[0]:
+                self.EditAxes()
     
     def OnRightClick(self, event):
         """
@@ -172,10 +154,11 @@ class PlotCanvas1D(PlotCanvas,wxmpl.PlotPanel):
         try:
             # this can fail with invalid data (e.g. negative values with log scale)
             self.axes.autoscale_view()
+            # this also
+            self.draw()
         except:
             pass
-        self.draw()
-        
+    
     def SetImage(self, n=1):
         """
         
@@ -243,7 +226,7 @@ class PlotCanvas1D(PlotCanvas,wxmpl.PlotPanel):
             x.children = []
         if self.source!=None:
             self.source.children.pop(self.source.children.index(self))
-        pub.sendMessage("plot.empty_page", data=self)
+        pub.sendMessage("plot.empty_page", inst=self)
     
     def SetPlotColors(self):
         """

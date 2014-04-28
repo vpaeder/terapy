@@ -24,7 +24,8 @@
     
 import wx
 from terapy.core import icon_path
-from wx.lib.pubsub import Publisher as pub
+from wx.lib.pubsub import setupkwargs
+from wx.lib.pubsub import pub
 
 class ScanEvent():
     """
@@ -126,7 +127,7 @@ class ScanEvent():
         """
         for x in self.itmList:
             if self.can_run:
-                ev = self.host.GetItemData(x).GetData()
+                ev = self.host.GetItemPyData(x)
                 if ev.is_active:
                     if ev.is_display or ev.is_save:
                         ev.run(data)
@@ -236,6 +237,8 @@ class ScanEvent():
             
             children.append(root)
             propFont = wx.Font(8,wx.DECORATIVE,wx.NORMAL,wx.NORMAL)
+            if wx.Platform == "__WXMAC__":
+                propFont.SetFaceName(".LucidaGrandeUI")
             propColour = "#3F3F3F"
             for x in children:
                 self.host.SetItemFont(x,propFont)

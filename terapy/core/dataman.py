@@ -104,7 +104,7 @@ class Measurement():
                     self.shape[self.count] = shape[:]
                     self.opcount[self.count] = opcount[:]
                     self.axes[self.count] = axes[:]
-                    self.inputs[self.count] = AxisInfos(x.data.inlist[x.data.input].qtynames[x.data.index], x.data.inlist[x.data.input].units[x.data.index])
+                    self.inputs[self.count] = AxisInfos(x.data.inlist[x.data.input].qtynames[x.data.index], x.data.inlist[x.data.input].units[x.data.index], device=x.data.inlist[x.data.input])
                     self.count+=1
                 if x.data.is_display or x.data.is_save:
                     x.data.m_id = self.count-1 # assume that the plot function is after an input => will plot 1st qty present before itself 
@@ -117,7 +117,7 @@ class Measurement():
                         cshape.append(x.data.N)
                         # if the loop acts on an axis, save axis reference
                         if hasattr(x.data,'axlist'):
-                            caxis.append(AxisInfos(x.data.axlist[x.data.axis].qtynames,x.data.axlist[x.data.axis].units))
+                            caxis.append(AxisInfos(x.data.axlist[x.data.axis].qtynames,x.data.axlist[x.data.axis].units,device=x.data.axlist[x.data.axis]))
                         else:
                             caxis.append(None)
                     self.GetShapes(x,cshape,copcount,caxis)
@@ -347,6 +347,7 @@ class DataArray():
         self.shape = shape # shape of data array
         self.coords = [] # coordinates along each axis
         self.data = np.zeros(shape)*np.nan # data
+        self.source = None # source array (if this array is post-processed from another one)
         self.idx = np.array(map(int,np.zeros(len(shape)))) # current index
         self.plot = None # where the data is plotted
         self.color = None # plot color
@@ -488,8 +489,12 @@ class DataArray():
         narray.name = self.name
         narray.scanDim = self.scanDim
         narray.filename = self.filename
-        narray.input = self.input.copy()
-        narray.axes = [x.copy() for x in self.axes]
+        try:
+            narray.input = self.input.copy()
+            narray.axes = [x.copy() for x in self.axes]
+        except:
+            narray.input = AxisInfos()
+            narray.axes = [AxisInfos() for x in self.axes]
         
         return narray
 
@@ -525,9 +530,17 @@ class DataArray():
         factors = ConvertUnits(old_labels, new_labels, ask_incompatible = False)
         for n in range(len(factors)):
             if n<len(self.shape):
-                self.axes[n] = old_labels[n]
+                try:
+                    self.axes[n].units = old_labels[n].units
+                    self.axes[n].name = old_labels[n].name
+                except:
+                    pass
             else:
-                self.input = old_labels[n]
+                try:
+                    self.input.units = old_labels[n].units
+                    self.input.name = old_labels[n].name
+                except:
+                    pass
             if factors[n]!=1:
                 if n<len(self.shape):
                     self.coords[n] *= factors[n]
