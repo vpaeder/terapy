@@ -157,7 +157,7 @@ class FileSelectionDialog(wx.Dialog):
         self.label_filename = wx.StaticText(self, -1, "File name")
         self.input_filename = wx.TextCtrl(self, -1, os.path.basename(fname))
         self.button_filename = wx.Button(self,-1,"...")
-        self.check_autoname = wx.CheckBox(self,-1,"Name with time stamp")
+        self.check_autoname = wx.CheckBox(self,-1,"Name automatically with time stamp")
         self.check_backup = wx.CheckBox(self,-1,"Save backup")
 
         self.button_OK = wx.Button(self, wx.ID_OK)

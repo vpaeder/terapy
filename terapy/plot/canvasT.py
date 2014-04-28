@@ -64,8 +64,10 @@ class PlotCanvasT(PlotCanvas1D):
         x, y = event.GetPositionTuple() 
         wh = self.GetSize()
         axes = wxmpl.find_axes(self, x, wh[1] - y)    # mirror y coordinates to get proper orientation
-        # send position further
-        pub.sendMessage("plot.move_axis", inst=axes[1]) 
+        
+        if axes[1]!=None:
+            # send position further
+            pub.sendMessage("plot.move_axis", inst=axes[1]) 
 
     def PopupMenuItems(self,menu):
         """
