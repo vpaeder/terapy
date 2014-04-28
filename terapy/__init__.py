@@ -665,6 +665,15 @@ class TeraPyMainFrame(wx.Frame):
         self.CreateHardwareConfigMenu()
     
     def OnReloadHardware(self, event):
+        """
+        
+            Trigger hardware reload.
+            This function is meant to be called from main menu.
+            
+            Parameters:
+                event    -    event object (wx.Event)
+        
+        """
         if(wx.MessageBox("Are you sure? Connected devices will be re-initialized!", "Reload hardware", style=wx.YES | wx.NO) != wx.YES):
             return
         self.StopDeviceTimer(destroy=True)
