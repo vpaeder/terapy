@@ -45,8 +45,9 @@ from time import localtime, strftime
 from terapy.scan.control import ScanEventList
 from terapy.core.history import HistoryControl
 from terapy.core import icon_path
+import functools
 
-__version__         = "2.00b7 / 25.04.2014"
+__version__         = "2.00b8 / 28.04.2014"
 __doc_url__         = "http://pythonhosted.org/terapy/doc.html"
 
 class TeraPyMainFrame(wx.Frame):
@@ -592,11 +593,27 @@ class TeraPyMainFrame(wx.Frame):
         # set selected stage position
         if hasattr(self,'nb_widgets'):
             if self.nb_widgets!=None:
-                # in wxPython 3, AUINotebook has a CurrentPage attribute, but not in wxPython 2
                 curwg = self.nb_widgets.GetPage(self.nb_widgets.GetSelection())
-                if hasattr(curwg,'axis'):
+                if hasattr(curwg,'axis'): # currently selected widget corresponds to an axis device => set value
                     curwg.SetValue(inst)
-        
+                else: # currently selected widget is something else => need selection by user
+                    pitems = []
+                    menu = wx.Menu()
+                    for n in range(self.nb_widgets.GetPageCount()):
+                        cp = self.nb_widgets.GetPage(n)
+                        if hasattr(cp,'axis'):
+                            pitems.append(cp.axis)
+                            mitem = menu.Append(wx.NewId(),cp.axis.name)
+                            menu.Bind(wx.EVT_MENU, functools.partial(self.SetAxisFromPopupMenu,cp,inst), id=mitem.Id)
+                    self.PopupMenu(menu)
+    
+    def SetAxisFromPopupMenu(self, widget, pos, event=None):
+        widget.SetValue(pos)
+        for n in range(self.nb_widgets.GetPageCount()):
+            if self.nb_widgets.GetPage(n) == widget:
+                self.nb_widgets.SetSelection(n)
+                break
+    
     def UpdateHardware(self):
         """
         
