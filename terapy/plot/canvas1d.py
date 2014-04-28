@@ -81,44 +81,25 @@ class PlotCanvas1D(PlotCanvas,PlotPanel):
         self.labels = [xlabel, ylabel]
         self.SetLabels()
         
-        self.Bind(wx.EVT_LEFT_DCLICK, self.OnLeftClick, self)
-        self.Bind(wx.EVT_LEFT_DOWN, self.OnLeftClick, self)
+        self.Bind(wx.EVT_LEFT_DCLICK, self.OnLeftDblClick, self)
         self.Bind(wx.EVT_RIGHT_DOWN, self.OnRightClick, self)
     
-    def OnLeftClick(self, event):
+    def OnLectDblClick(self, event):
         """
         
-            Actions triggered on left mouse button click.
+            Actions triggered on left mouse button double click.
             
             Parameters:
                 event    -    wx.Event
         
         """
-        # MPL plot canvas intercept double clicks
-        # Use another strategy:
-        #    - on 1st click, set a timer
-        #    - if timer triggers before 2nd click, resets
-        #    - if click happens before, consider as double click
-        if hasattr(self,'timer'):
-            self.timer.Stop()
-            del(self.timer)
-            dbl = True
-        else:
-            self.timer = wx.Timer()
-            self.timer.Bind(wx.EVT_TIMER, self.OnLeftClick, self.timer)
-            self.timer.Start(500)
-            dbl = False
-            event.Skip()
-        
-        if not(isinstance(event,wx.TimerEvent)):
-            if dbl or event.ButtonDClick():
-                x, y = self._get_canvas_xy(event)
-                evt = matplotlib.backend_bases.MouseEvent(1, self, x, y)
-                for ax in self.get_figure().get_axes(): 
-                    xlabel = ax.xaxis.get_label()
-                    ylabel = ax.yaxis.get_label()
-                    if xlabel.contains(evt)[0] or ylabel.contains(evt)[0]:
-                        self.EditAxes()
+        x, y = self._get_canvas_xy(event)
+        evt = matplotlib.backend_bases.MouseEvent(1, self, x, y)
+        for ax in self.get_figure().get_axes(): 
+            xlabel = ax.xaxis.get_label()
+            ylabel = ax.yaxis.get_label()
+            if xlabel.contains(evt)[0] or ylabel.contains(evt)[0]:
+                self.EditAxes()
     
     def OnRightClick(self, event):
         """

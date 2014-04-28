@@ -104,14 +104,13 @@ class PlotCanvas2D(PlotCanvas,PlotPanel):
         # send color change event to notify history from change
         pub.sendMessage("plot.color_change")
 
-        self.Bind(wx.EVT_LEFT_DCLICK, self.OnLeftClick, self)
-        self.Bind(wx.EVT_LEFT_DOWN, self.OnLeftClick, self)
+        self.Bind(wx.EVT_LEFT_DCLICK, self.OnLeftDblClick, self)
     
     def Destroy(self):
         PlotCanvas.Destroy(self)
         PlotPanel.Destroy(self)
     
-    def OnLeftClick(self, event):
+    def OnLeftDblClick(self, event):
         """
         
             Actions triggered on left mouse button click.
@@ -120,31 +119,13 @@ class PlotCanvas2D(PlotCanvas,PlotPanel):
                 event    -    wx.Event
         
         """
-        # MPL plot canvas intercept double clicks
-        # Use another strategy:
-        #    - on 1st click, set a timer
-        #    - if timer triggers before 2nd click, resets
-        #    - if click happens before, consider as double click
-        if hasattr(self,'timer'):
-            self.timer.Stop()
-            del(self.timer)
-            dbl = True
-        else:
-            self.timer = wx.Timer()
-            self.timer.Bind(wx.EVT_TIMER, self.OnLeftClick, self.timer)
-            self.timer.Start(500)
-            dbl = False
-            event.Skip()
-        
-        if not(isinstance(event,wx.TimerEvent)):
-            if dbl or event.ButtonDClick():
-                x, y = self._get_canvas_xy(event)
-                evt = matplotlib.backend_bases.MouseEvent(1, self, x, y)
-                for ax in self.get_figure().get_axes(): 
-                    xlabel = ax.xaxis.get_label()
-                    ylabel = ax.yaxis.get_label()
-                    if xlabel.contains(evt)[0] or ylabel.contains(evt)[0]:
-                        self.EditAxes()
+        x, y = self._get_canvas_xy(event)
+        evt = matplotlib.backend_bases.MouseEvent(1, self, x, y)
+        for ax in self.get_figure().get_axes(): 
+            xlabel = ax.xaxis.get_label()
+            ylabel = ax.yaxis.get_label()
+            if xlabel.contains(evt)[0] or ylabel.contains(evt)[0]:
+                self.EditAxes()
 
     def AddPlot(self,array=None):
         """

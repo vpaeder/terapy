@@ -57,7 +57,9 @@ class PlotCanvasT(PlotCanvas1D):
                 event    -    wx.Event
         
         """
-        event.StopPropagation()
+        #event.StopPropagation()
+        #event.Skip()
+        PlotCanvas1D.OnLectDblClick(self, event)
         # this implements the goto-cursor-position functionality of the scan stage
         x, y = event.GetPositionTuple() 
         wh = self.GetSize()
