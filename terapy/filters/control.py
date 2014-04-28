@@ -64,12 +64,13 @@ class FilterControl(wx.Panel):
         
         """
         wx.Panel.__init__(self, parent)
+        from terapy.core import left_width
         self.bank = None
         self.dim = dim
         
         # filter list
         self.list = FilterList(self, -1, style=wx.LC_REPORT|wx.LC_NO_HEADER)
-        self.list.SetMaxSize((200,-1))
+        self.list.SetMinSize((left_width,-1))
         
         self.list.InsertColumn(0,"Name")
         self.img_list = wx.ImageList(16,16)
@@ -85,12 +86,11 @@ class FilterControl(wx.Panel):
         # window preview
         self.label_plot = wx.StaticText(self, -1, "Apodization window")
         self.plot_filter = PlotPanel(self, -1)
-        self.plot_filter.SetMaxSize((150,100))
-        self.plot_filter.SetMinSize((150,100))
+        self.plot_filter.SetMinSize((max([left_width-50,0]),100))
 
         # further controls
         self.sizer = wx.BoxSizer(wx.VERTICAL)
-        self.sizer.Add(self.list, 1, wx.EXPAND|wx.TOP, 2)
+        self.sizer.Add(self.list, 1, wx.EXPAND|wx.ALL, 2)
         hbox = wx.BoxSizer(wx.HORIZONTAL)
         self.button_up = wx.BitmapButton(self, -1, wx.Image(icon_path + "go-up.png").ConvertToBitmap())
         self.button_down = wx.BitmapButton(self, -1, wx.Image(icon_path + "go-down.png").ConvertToBitmap())
@@ -102,7 +102,7 @@ class FilterControl(wx.Panel):
         hbox.Add(self.button_remove, 0, wx.EXPAND|wx.ALL, 2)
         self.sizer.Add(hbox, 0, wx.EXPAND|wx.LEFT|wx.RIGHT, 2)
         self.sizer.Add(self.label_plot, 0, wx.EXPAND|wx.TOP, 2)
-        self.sizer.Add(self.plot_filter, 0, wx.EXPAND|wx.TOP|wx.CENTER, 2)
+        self.sizer.Add(self.plot_filter, 0, wx.EXPAND|wx.TOP, 2)
         
         # bindings
         self.Bind(wx.EVT_LIST_ITEM_RIGHT_CLICK, self.OnFilterListRightClick, self.list)

@@ -81,8 +81,8 @@ class TeraPyMainFrame(wx.Frame):
         self.__create_widgets()
                 
         # arrange objects and set layout
-        self.__set_properties()
         self.__do_layout()
+        self.__set_properties()
         
         # widget event bindings
         self.__create_event_bindings()
@@ -108,17 +108,25 @@ class TeraPyMainFrame(wx.Frame):
             Fill in widgets
         
         """
+        # splitters
+        self.splitter0 = wx.SplitterWindow(self.panel,-1,style=wx.SP_LIVE_UPDATE)
+        self.splitter1 = wx.SplitterWindow(self.splitter0,-1,style=wx.SP_LIVE_UPDATE)
+        self.splitter0.SetMinimumPaneSize(150)
+        self.splitter1.SetMinimumPaneSize(150)
+        
         # history and filter list
-        self.history = HistoryControl(self.panel)
-        self.filter = FilterControl(self.panel)
+        self.panel_left = wx.Panel(self.splitter0)
+        self.history = HistoryControl(self.panel_left)
+        self.filter = FilterControl(self.panel_left)
         
         # event list + scan options
-        self.tree_events = ScanEventList(self.panel)
-        self.progress_bar = wx.StaticText(self.panel, -1, "0%",  style=wx.TE_CENTER)
-        self.auto_update = wx.CheckBox(self.panel, -1, "Auto update during scan")
+        self.panel_right = wx.Panel(self.splitter1)
+        self.tree_events = ScanEventList(self.panel_right)
+        self.progress_bar = wx.StaticText(self.panel_right, -1, "0%",  style=wx.TE_CENTER)
+        self.auto_update = wx.CheckBox(self.panel_right, -1, "Auto update during scan")
         
         # graph panel
-        self.notebook = PlotNotebook(self.panel, -1)
+        self.notebook = PlotNotebook(self.splitter1, -1)
         
         # bottom widgets
         self.CreateDeviceWidgets()
@@ -137,14 +145,14 @@ class TeraPyMainFrame(wx.Frame):
                 sizer = self.split_window.Parent.GetSizer()
                 if sizer!=None: # if the splitter window is in a sizer, replace with plot notebook
                     sizer.Replace(self.split_window,self.notebook)
-                    self.notebook.Reparent(self.panel)
+                    self.notebook.Reparent(self.splitter1)
                 self.split_window.Destroy()
         
         # create device widgets
-        self.device_widgets = hardware.get_widgets(self.panel)
+        self.device_widgets = hardware.get_widgets(self.splitter1)
         if len(self.device_widgets)>0:
             # create splitter window and widget notebook
-            self.split_window = Splitter(self.panel,-1,style=wx.SP_LIVE_UPDATE,proportion=0.85)
+            self.split_window = Splitter(self.splitter1,-1,style=wx.SP_LIVE_UPDATE,proportion=0.85)
             self.nb_widgets = aui.AuiNotebook(self.split_window,style=aui.AUI_NB_TAB_SPLIT|aui.AUI_NB_TAB_MOVE|aui.AUI_NB_BOTTOM)
             ap = aui.AuiSimpleTabArt()
             self.nb_widgets.SetArtProvider(ap)
@@ -276,8 +284,17 @@ class TeraPyMainFrame(wx.Frame):
         Set properties and layout
         
         """
-        self.tree_events.SetMinSize((-1,600))
-        self.notebook.SetMinSize((600,-1))
+        from terapy.core import left_width, right_width
+        
+        self.splitter0.SetSashGravity(0.0)
+        self.splitter1.SetSashGravity(1.0)
+        self.splitter0.SetMinimumPaneSize(50)
+        self.splitter1.SetMinimumPaneSize(50)
+        self.splitter0.SetSashPosition(left_width)
+        self.splitter1.SetSashPosition(self.GetClientSize()[0]-right_width)
+        self.history.SetMinSize((left_width,-1))
+        self.filter.SetMinSize((left_width,-1))
+        self.tree_events.SetMinSize((right_width,600))
         
         self.progress_bar.SetForegroundColour(wx.Colour(0, 0, 0))
         self.progress_bar.SetFont(wx.Font(14, wx.SWISS, wx.NORMAL, wx.BOLD))            
@@ -295,48 +312,52 @@ class TeraPyMainFrame(wx.Frame):
         main_sizer = wx.BoxSizer(wx.VERTICAL)
         
         # vertical sizer for scan history
-        vbox0ast = wx.StaticBox(self.panel, -1, "Scan history")
+        vbox0ast = wx.StaticBox(self.panel_left, -1, "Scan history")
         vbox0a = wx.StaticBoxSizer(vbox0ast, wx.VERTICAL)
-        vbox0a.Add(self.history, 1, wx.EXPAND|wx.ALL, 2)
+        vbox0a.Add(self.history, 1, wx.EXPAND|wx.ALL, 0)
         
-        vbox0bst = wx.StaticBox(self.panel, -1, "Post-processing")
+        vbox0bst = wx.StaticBox(self.panel_left, -1, "Post-processing")
         vbox0b = wx.StaticBoxSizer(vbox0bst, wx.VERTICAL)
         vbox0b.Add(self.filter, 1, wx.EXPAND|wx.ALL,0)
         
         vbox0 = wx.BoxSizer(wx.VERTICAL)
-        vbox0.Add(vbox0a, 1, wx.EXPAND|wx.ALL, 2)
-        vbox0.Add(vbox0b, 2, wx.EXPAND|wx.ALL, 2)
+        vbox0.Add(vbox0a, 1, wx.EXPAND|wx.ALL, 0)
+        vbox0.Add(vbox0b, 2, wx.EXPAND|wx.ALL, 0)
         
         # vertical sizers for time scan control
-        vbox3st = wx.StaticBox(self.panel, -1, "Scan settings")
+        vbox3st = wx.StaticBox(self.panel_right, -1, "Scan settings")
         vbox3 = wx.StaticBoxSizer(vbox3st, wx.VERTICAL)
         vbox3.Add(self.tree_events, 1, wx.EXPAND|wx.ALL, 0)
         
         # progress display
-        hbox5st = wx.StaticBox(self.panel, -1, "Scan progress")
+        hbox5st = wx.StaticBox(self.panel_right, -1, "Scan progress")
         hbox5 = wx.StaticBoxSizer(hbox5st, wx.HORIZONTAL)
         hbox5.AddStretchSpacer()
-        hbox5.Add(self.progress_bar, 0, wx.ALIGN_CENTER_HORIZONTAL, 2)
+        hbox5.Add(self.progress_bar, 0, wx.ALIGN_CENTER_HORIZONTAL, 0)
         hbox5.AddStretchSpacer()
         
         # options
-        vbox6st = wx.StaticBox(self.panel, -1, "Options")
+        vbox6st = wx.StaticBox(self.panel_right, -1, "Options")
         vbox6 = wx.StaticBoxSizer(vbox6st, wx.VERTICAL)
-        vbox6.Add(self.auto_update, 1, wx.EXPAND|wx.ALL, 2)
+        vbox6.Add(self.auto_update, 0, wx.EXPAND|wx.ALL, 2)
         
         # top level sizers
         hbox0 = wx.BoxSizer(wx.HORIZONTAL)
-        hbox0.Add(vbox0, 0, wx.EXPAND|wx.ALL, 2) # x|o|o
-        if self.split_window !=None: # when device widgets are present
-            hbox0.Add(self.split_window,1,wx.EXPAND) # o|x|o
-        else:  
-            hbox0.Add(self.notebook, 1, wx.EXPAND) # o|x|o
+        hbox0.Add(self.splitter0, 1, wx.EXPAND|wx.ALL, 2) # x|o|o
+        
         vbox2 = wx.BoxSizer(wx.VERTICAL)
         vbox2.Add(vbox3, 0, wx.EXPAND|wx.ALL, 2)
         vbox2.Add(hbox5, 0, wx.EXPAND|wx.ALL, 2)
         vbox2.Add(vbox6, 0, wx.EXPAND|wx.ALL, 2)
-        hbox0.Add(vbox2, 0, wx.EXPAND|wx.ALL, 2)# o|o|x
-                
+        
+        self.panel_left.SetSizerAndFit(vbox0)
+        self.panel_right.SetSizerAndFit(vbox2)
+        self.splitter0.SplitVertically(self.panel_left,self.splitter1)
+        if self.split_window !=None: # when device widgets are present
+            self.splitter1.SplitVertically(self.split_window,self.panel_right)
+        else:  
+            self.splitter1.SplitVertically(self.notebook,self.panel_right)
+        
         # add sizers to main sizer
         main_sizer.Add(hbox0, 1, wx.EXPAND)
         

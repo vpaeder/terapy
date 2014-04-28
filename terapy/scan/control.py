@@ -54,6 +54,7 @@ class ScanEventList(wx.Panel):
         
         """
         wx.Panel.__init__(self, parent)
+        from terapy.core import right_width
         self.parent = parent
         self.events = []
         self.scanThread = None
@@ -63,8 +64,7 @@ class ScanEventList(wx.Panel):
         from terapy.core.tooltip import ToolTip
         ToolTip("Double click  ->  Change properties\nRight click   ->  Menu\nShift+Left    ->  Enable/disable","Usage",self.list_events)
         self.img_list = wx.ImageList(16,16)
-        self.list_events.SetMaxSize((200,-1))
-        self.list_events.SetMinSize((200,-1))
+        self.list_events.SetMinSize((right_width,-1))
         
         for x in modules:
             self.img_list.Add(x(self).get_icon())
@@ -73,7 +73,7 @@ class ScanEventList(wx.Panel):
         
         # controls
         self.sizer = wx.BoxSizer(wx.VERTICAL)
-        self.sizer.Add(self.list_events, 1, wx.EXPAND|wx.TOP, 2)
+        self.sizer.Add(self.list_events, 1, wx.EXPAND|wx.TOP|wx.BOTTOM, 2)
         hbox = wx.BoxSizer(wx.HORIZONTAL)
         self.button_up = wx.BitmapButton(self, -1, wx.Image(icon_path + "go-up.png").ConvertToBitmap())
         self.button_down = wx.BitmapButton(self, -1, wx.Image(icon_path + "go-down.png").ConvertToBitmap())

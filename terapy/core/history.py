@@ -274,7 +274,6 @@ class HistoryList(wx.ListCtrl, HistoryMixin, ListCtrlAutoWidthMixin):
         ListCtrlAutoWidthMixin.__init__(self) # add auto width support
         self.setResizeColumn(0)
         
-        self.SetMinSize((100,-1))
         self.InsertColumn(0,"Name")
         
         self.imglist = DataIconList()
@@ -296,13 +295,14 @@ class HistoryControl(wx.Panel):
         
         """
         wx.Panel.__init__(self, parent)
+        from terapy.core import left_width
         
         self.filter = None
         self.ref_num = 0
         
         # controls
         self.list = HistoryList(self,-1,style=wx.LC_REPORT|wx.LC_EDIT_LABELS|wx.LC_NO_HEADER)
-        self.list.SetMaxSize((200,-1))
+        self.list.SetMinSize((left_width,-1))
         
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.sizer.Add(self.list, 1, wx.EXPAND|wx.ALL, 2)

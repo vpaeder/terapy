@@ -81,3 +81,16 @@ class PositiveFloatValidator(NumberValidator):
     
     def Clone(self):
         return PositiveFloatValidator()
+
+class PositiveIntegerValidator(IntegerValidator):
+    """
+    
+        Validator for positive integer numbers
+    
+    """
+    def __init__(self):
+        NumberValidator.__init__(self,floats=False,negative=False)
+    
+    def Clone(self):
+        return PositiveIntegerValidator()
+    

@@ -74,6 +74,10 @@ for cnd in candidates:
                         module_path = y.attributes['value'].value
                     elif y.nodeName == 'refresh_delay':
                         refresh_delay = float(y.attributes['value'].value)
+                    elif y.nodeName == 'left_width':
+                        left_width = int(y.attributes['value'].value)
+                    elif y.nodeName == 'right_width':
+                        right_width = int(y.attributes['value'].value)
                     elif y.nodeName == 'units':
                         default_units[str(y.attributes['type'].value)] = str(y.attributes['symbol'].value) 
         main_config_file = cnd
@@ -94,6 +98,10 @@ if not('module_path' in locals()):
     module_path = app_path + "modules"  # where custom modules may be stored
 if not('refresh_delay' in locals()):
     refresh_delay = 0.2                 # delay (in seconds) after which the display will be updated during scan 
+if not('left_width' in locals()):
+    left_width = 200                    # min. width of left panel in pixels 
+if not('right_width' in locals()):
+    right_width = 200                    # min. width of right panel in pixels 
 
 # test if folders exist
 for x in ['default_path', 'user_path', 'config_path', 'filter_path', 'module_path']:

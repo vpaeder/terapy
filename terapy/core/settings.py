@@ -23,10 +23,10 @@
 """
 
 import wx.grid
-from wx.lib import sheet
-from terapy.core.validator import PositiveFloatValidator
+from terapy.core.validator import PositiveFloatValidator, PositiveIntegerValidator
+from collections import OrderedDict
 
-settings = {'default_path':['Backup folder','f'],'user_path':['User folder','f'],'config_path':['Configuration folder','f'],'filter_path':['Filter bank folder','f'],'module_path':['Module folder','f'],'refresh_delay':['Refresh delay','n']}
+settings = OrderedDict([('default_path',['Backup folder','f']),('user_path',['User folder','f']),('config_path',['Configuration folder','f']),('filter_path',['Filter bank folder','f']),('module_path',['Module folder','f']),('refresh_delay',['Refresh delay during scan','n']),('left_width',['Min. width of left panel (px)','i']),('right_width',['Min. width of right panel (px)','i'])])
 
 class SettingsDialog(wx.Dialog):
     """
@@ -45,7 +45,8 @@ class SettingsDialog(wx.Dialog):
         
         """
         wx.Dialog.__init__(self, parent, title=title, size=(400,-1))
-        self.sheet = sheet.CSheet(self)
+        self.sheet = wx.grid.Grid(self)
+        self.sheet.CreateGrid(len(settings.keys()),2)
         self.button_OK = wx.Button(self, wx.ID_OK)
         self.button_Cancel = wx.Button(self, wx.ID_CANCEL)
         
@@ -59,8 +60,8 @@ class SettingsDialog(wx.Dialog):
         self.SetSizerAndFit(sizer)
                 
         # build list of settings
-        self.slist = {}
-        for x in settings:
+        self.slist = OrderedDict()
+        for x in settings.keys():
             self.slist[x] = [settings[x][0], getattr(__import__('terapy.core', fromlist=[x]), x), settings[x][1]]
         
         # fill sheet
@@ -78,6 +79,9 @@ class SettingsDialog(wx.Dialog):
             self.sheet.SetReadOnly(n,0,True)
             if self.slist[x][2] == 'n':
                 self.sheet.SetCellEditor(n,1,wx.grid.GridCellFloatEditor(precision=1))
+                self.sheet.SetCellAlignment(n,1,wx.ALIGN_RIGHT, wx.ALIGN_CENTRE)
+            elif self.slist[x][2] == 'i':
+                self.sheet.SetCellEditor(n,1,wx.grid.GridCellNumberEditor())
                 self.sheet.SetCellAlignment(n,1,wx.ALIGN_RIGHT, wx.ALIGN_CENTRE)
             elif self.slist[x][2] == 'f':
                 self.sheet.SetCellAlignment(n,1,wx.ALIGN_RIGHT, wx.ALIGN_CENTRE)
@@ -105,6 +109,13 @@ class SettingsDialog(wx.Dialog):
                 control.SetValidator(PositiveFloatValidator())
                 control.SetValue(self.table.GetValue(event.Row, event.Col))
             event.Skip()
+        elif self.slist[x][2]=='i':
+            editor = self.sheet.GetCellEditor(event.Row,event.Col)
+            control = editor.GetControl()
+            if control!=None:
+                control.SetValidator(PositiveIntegerValidator())
+                control.SetValue(self.table.GetValue(event.Row, event.Col))
+                control.SetFocus()
         else:
             event.Veto()
             name = self.slist[x][0]
@@ -131,6 +142,13 @@ class SettingsDialog(wx.Dialog):
             except:
                 control.SetValue("0.0")
                 self.table.SetValue(event.Row, event.Col, 0.0)
+        elif self.slist[x][2]=='i':
+            try:
+                self.table.SetValue(event.Row, event.Col, int(control.GetValue()))
+                control.SetValue(str(int(control.GetValue())))
+            except:
+                control.SetValue("0")
+                self.table.SetValue(event.Row, event.Col, 0)
         else:
             event.Skip()
     
@@ -201,7 +219,7 @@ class SettingsList(wx.grid.PyGridTableBase):
             Initialization.
             
             Parameters:
-                data     -    dict of settings as (name (str), value, type ['f','n'])  
+                data     -    dict of settings as (name (str), value, type ['f','n','i'])  
         
         """
         wx.grid.PyGridTableBase.__init__(self)
@@ -259,7 +277,7 @@ class SettingsList(wx.grid.PyGridTableBase):
         """
         x = self.data.keys()[row]
         
-        if self.data[x][2] == 'n' or col==0: 
+        if self.data[x][2] == 'n' or self.data[x][2] == 'i' or col==0:
             return str(self.data[x][col])
         elif self.data[x][2] == 'f':
             # compute optimal size
