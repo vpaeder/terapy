@@ -292,18 +292,13 @@ class MoveUntilSelectionDialog(wx.Dialog):
         
         self.trlist = trlist
     
-        self.Bind(wx.EVT_BUTTON, self.OnOkButton, self.button_OK)
-        self.Bind(wx.EVT_BUTTON, self.OnCancelButton, self.button_Cancel)
-    
-    def OnOkButton(self, event=None):
-        wx.CallAfter(self.EndModal,wx.ID_OK)
-
-    def OnCancelButton(self, event=None):
-        wx.CallAfter(self.EndModal,wx.ID_CANCEL)
-
     def OnTriggerSelect(self, event=None):
         """
         
+            Callback for trigger selection.
+            
+            Parameters:
+                event    -    wx.Event
         
         """
         trigger = self.choice_trigger.GetSelection()

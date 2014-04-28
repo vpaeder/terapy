@@ -345,7 +345,6 @@ class ScanEventList(wx.Panel):
             self.menuPosition = event.GetPosition()
         
         itm = self.list_events.HitTest(self.menuPosition)[0]
-        #if not(itm.IsOk()): itm = self.list_events.GetSelection()
         
         menu = wx.Menu()
         menuAdd = wx.Menu()

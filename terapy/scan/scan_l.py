@@ -153,15 +153,6 @@ class ListLoopSettingsDialog(wx.Dialog):
         self.Bind(wx.EVT_BUTTON, self.OnAdd, self.button_add)
         self.Bind(wx.EVT_BUTTON, self.OnRemove, self.button_remove)
     
-        self.Bind(wx.EVT_BUTTON, self.OnOkButton, self.button_OK)
-        self.Bind(wx.EVT_BUTTON, self.OnCancelButton, self.button_Cancel)
-    
-    def OnOkButton(self, event=None):
-        wx.CallAfter(self.EndModal,wx.ID_OK)
-
-    def OnCancelButton(self, event=None):
-        wx.CallAfter(self.EndModal,wx.ID_CANCEL)
-
     def OnSelectSheetCell(self, event):
         """
         

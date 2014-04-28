@@ -608,6 +608,16 @@ class TeraPyMainFrame(wx.Frame):
                     self.PopupMenu(menu)
     
     def SetAxisFromPopupMenu(self, widget, pos, event=None):
+        """
+        
+            Set given widget (axis device widget) to given position.
+            
+            Parameters:
+                widget    -    axis device widget (wx.Window)
+                pos       -    position (float)
+                event     -    for compliance as event callback (wx.Event)
+        
+        """
         widget.SetValue(pos)
         for n in range(self.nb_widgets.GetPageCount()):
             if self.nb_widgets.GetPage(n) == widget:

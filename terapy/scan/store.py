@@ -198,16 +198,8 @@ class StoreEventDialog(wx.Dialog):
         self.instrlist = instrlist
         self.quantity = quantity
     
-        self.Bind(wx.EVT_BUTTON, self.OnOkButton, self.button_OK)
-        self.Bind(wx.EVT_BUTTON, self.OnCancelButton, self.button_Cancel)
         self.OnInputSelect()
     
-    def OnOkButton(self, event=None):
-        wx.CallAfter(self.EndModal,wx.ID_OK)
-
-    def OnCancelButton(self, event=None):
-        wx.CallAfter(self.EndModal,wx.ID_CANCEL)
-
     def OnInputSelect(self, event=None):
         """
         
