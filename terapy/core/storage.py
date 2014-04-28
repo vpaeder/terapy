@@ -18,17 +18,30 @@
 
 """
 
-   Storage class 
+   Simple storage class 
 
 """
 
 class Storage():
     def __init__(self):
-        pass
+        self._taglist = []
 
     def Save(self, data, tag):
-        setattr(self,tag,data)
+        if tag!="_taglist":
+            if not(hasattr(self,tag)):
+                self._taglist.append(tag)
+            setattr(self,tag,data)
 
     def Read(self, tag):
-        if hasattr(self,tag):
+        if hasattr(self,tag) and tag!="_taglist":
             return getattr(self,tag)
+        else:
+            return None
+    
+    def Remove(self, tag):
+        if hasattr(self,tag) and tag!="_taglist":
+            delattr(self, tag)
+            self._taglist.pop(self._taglist.index(tag))
+        
+    def GetTags(self):
+        return self._taglist
