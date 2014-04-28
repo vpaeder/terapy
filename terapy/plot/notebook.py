@@ -126,7 +126,11 @@ class PlotNotebook(wx.Notebook):
         if inst!=None:
             idx = self.FindCanvas(inst)
         if idx>-1 and idx<self.PageCount:
-            self.DeletePage(idx)
+            if self.PageCount==1:
+                # needed to avoid a crash on MacOS with wxPython 3
+                self.DeleteAllPages()
+            else:
+                self.DeletePage(idx)
             pub.sendMessage("plot.delete")
             pub.sendMessage("plot.color_change")
     

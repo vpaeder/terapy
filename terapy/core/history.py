@@ -588,9 +588,10 @@ class HistoryControl(wx.Panel):
                     if self.list.IsReference(event.GetIndex()):
                         itm = menu.Append(wx.NewId(), "&Clear reference")
                         self.Bind(wx.EVT_MENU, self.ClearReference, id=itm.Id)
-                    if self.canvas.CurrentPage.is_filter:
-                        itm = menu.Append(wx.NewId(), "S&et as reference")
-                        self.Bind(wx.EVT_MENU, lambda x: self.SetReference(event.GetIndex()), id=itm.Id)
+                    if self.canvas.CurrentPage!=None:
+                        if self.canvas.CurrentPage.is_filter:
+                            itm = menu.Append(wx.NewId(), "S&et as reference")
+                            self.Bind(wx.EVT_MENU, lambda x: self.SetReference(event.GetIndex()), id=itm.Id)
             
         self.PopupMenu(menu)
 
