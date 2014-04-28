@@ -168,6 +168,9 @@ class TeraPyMainFrame(wx.Frame):
         # refresh interface
         if self.panel.GetSizer()!=None:
             self.panel.SetSizerAndFit(self.panel.GetSizer())
+            if self.IsMaximized():
+                self.Maximize(False)
+                self.Maximize(True)
         
         #if 'mgr' in locals():
         #    cfg = wx.Config("TeraPy")
@@ -217,8 +220,10 @@ class TeraPyMainFrame(wx.Frame):
         
         # hardware menu
         menuHardware = wx.Menu()
-        mitem = menuHardware.Append(wx.NewId(), "&Reset Current Devices")
+        mitem = menuHardware.Append(wx.NewId(), "&Reset current devices")
         self.Bind(wx.EVT_MENU, self.OnResetHardware, id=mitem.Id)
+        mitem = menuHardware.Append(wx.NewId(), "&Reload device list")
+        self.Bind(wx.EVT_MENU, self.OnReloadHardware, id=mitem.Id)
         mitem = menuHardware.Append(wx.NewId(), "&Scan Hardware...")
         self.Bind(wx.EVT_MENU, self.OnScanHardware, id=mitem.Id)
         menuConfigMain = wx.Menu()
@@ -659,6 +664,17 @@ class TeraPyMainFrame(wx.Frame):
         """
         self.CreateHardwareConfigMenu()
     
+    def OnReloadHardware(self, event):
+        if(wx.MessageBox("Are you sure? Connected devices will be re-initialized!", "Reload hardware", style=wx.YES | wx.NO) != wx.YES):
+            return
+        self.StopDeviceTimer(destroy=True)
+        hardware.restore_hardware_info()
+        hardware.initiate_hardware()
+        self.UpdateHardware()
+        self.CreateDeviceWidgets()
+        self.StartDeviceTimer()
+        pub.sendMessage("set_status_text",inst="Hardware reload finished.")
+    
     def OnScanHardware(self, event):
         """
         
@@ -669,7 +685,7 @@ class TeraPyMainFrame(wx.Frame):
                 event    -    event object (wx.Event)
         
         """
-        if(wx.MessageBox("Are you sure? This will reset all hardware settings!", "Scan for Hardware", style=wx.YES | wx.NO) != wx.YES):
+        if(wx.MessageBox("Are you sure? This will reset all hardware settings!", "Scan for hardware", style=wx.YES | wx.NO) != wx.YES):
             return
     
         # stop input signal timer
@@ -688,7 +704,7 @@ class TeraPyMainFrame(wx.Frame):
             devlist = devlist + dev.ID + "_" + str(dev.axis) + ": " + dev.name + "\n"
             
         # display overview
-        dlg = wx.MessageDialog(self, devlist,caption="Found Hardware",style=wx.OK,pos=wx.DefaultPosition)
+        dlg = wx.MessageDialog(self, devlist,caption="Found hardware",style=wx.OK,pos=wx.DefaultPosition)
         dlg.ShowModal()
         dlg.Destroy()
         
@@ -698,6 +714,8 @@ class TeraPyMainFrame(wx.Frame):
         
         # restart device timer
         self.StartDeviceTimer()
+        
+        pub.sendMessage("set_status_text",inst="Hardware scan finished.")
     
     def OnConfigureInput(self, event):
         """
