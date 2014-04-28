@@ -345,6 +345,8 @@ class ScanEventList(wx.Panel):
             self.menuPosition = event.GetPosition()
         
         itm = self.list_events.HitTest(self.menuPosition)[0]
+        #if not(itm.IsOk()): itm = self.list_events.GetSelection()
+        
         menu = wx.Menu()
         menuAdd = wx.Menu()
         
@@ -365,13 +367,12 @@ class ScanEventList(wx.Panel):
         if menuAdd.GetMenuItemCount()>0:
             menu.AppendSubMenu(menuAdd,"&Add...")
         
-        if self.list_events.GetItemPyData(self.list_events.Selection)!=None or itm.IsOk():
+        if itm.IsOk():
+            # add options in case the clicked item is valid
             mitem = menu.Append(id=wx.NewId(),text="&Remove")
             self.Bind(wx.EVT_MENU, self.OnRemoveEvent, id=mitem.Id)
             mitem = menu.Append(id=wx.NewId(),text="&Rename")
             self.Bind(wx.EVT_MENU, lambda x: self.list_events.EditLabel(self.list_events.Selection), id=mitem.Id)
-        # if right-click is above an item, add enable/disable menu option
-        if itm.IsOk():
             ev = self.list_events.GetItemPyData(itm)
             if not(hasattr(ev, "is_active")):
                 return # not an editable menu item
