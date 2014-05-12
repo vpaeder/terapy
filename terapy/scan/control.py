@@ -64,7 +64,7 @@ class ScanEventList(wx.Panel):
         from terapy.core.tooltip import ToolTip
         ToolTip("Double click  ->  Change properties\nRight click   ->  Menu\nShift+Left    ->  Enable/disable","Usage",self.list_events)
         self.img_list = wx.ImageList(16,16)
-        self.list_events.SetMinSize((right_width,-1))
+        self.list_events.SetMinSize((right_width,600))
         
         for x in modules:
             self.img_list.Add(x(self).get_icon())

@@ -62,23 +62,24 @@ for cnd in candidates:
             scope = x.attributes['scope'].value
             if scope == 'terapy':
                 for y in x.childNodes:
-                    if y.nodeName == 'default_path':
+                    nn = str(y.nodeName)
+                    if nn == 'default_path':
                         default_path = y.attributes['value'].value
-                    elif y.nodeName == 'user_path':
+                    elif nn == 'user_path':
                         user_path = y.attributes['value'].value
-                    elif y.nodeName == 'config_path':
+                    elif nn == 'config_path':
                         config_path = y.attributes['value'].value
-                    elif y.nodeName == 'filter_path':
+                    elif nn == 'filter_path':
                         filter_path = y.attributes['value'].value
-                    elif y.nodeName == 'module_path':
+                    elif nn == 'module_path':
                         module_path = y.attributes['value'].value
-                    elif y.nodeName == 'refresh_delay':
+                    elif nn == 'refresh_delay':
                         refresh_delay = float(y.attributes['value'].value)
-                    elif y.nodeName == 'left_width':
+                    elif nn == 'left_width':
                         left_width = int(y.attributes['value'].value)
-                    elif y.nodeName == 'right_width':
+                    elif nn == 'right_width':
                         right_width = int(y.attributes['value'].value)
-                    elif y.nodeName == 'units':
+                    elif nn == 'units':
                         default_units[str(y.attributes['type'].value)] = str(y.attributes['symbol'].value) 
         main_config_file = cnd
         break # stop after 1st valid file

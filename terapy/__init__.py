@@ -509,8 +509,7 @@ class TeraPyMainFrame(wx.Frame):
         dlg = SettingsDialog(self)
         dlg.ShowModal()
         dlg.Destroy()
-        #dlg.ShowModal()
-        #dlg.Destroy()
+        self.__set_properties()
 
     def OnDefaultUnits(self, event):
         """

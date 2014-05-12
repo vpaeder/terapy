@@ -111,7 +111,9 @@ class AxesPropertiesDialog(wx.Dialog):
         
         # assign combo editor to 2nd column
         self.editor = wx.grid.GridCellChoiceEditor(self.units.keys(),allowOthers=True)
+        self.texteditor = wx.grid.GridCellTextEditor()
         for n in range(len(axlist)):
+            self.sheet.SetCellEditor(n,0,self.texteditor)
             self.sheet.SetCellEditor(n,1,self.editor)
             self.sheet.SetReadOnly(n,0,read_only[0])
             self.sheet.SetReadOnly(n,1,read_only[1])

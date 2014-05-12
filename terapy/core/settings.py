@@ -115,7 +115,6 @@ class SettingsDialog(wx.Dialog):
             if control!=None:
                 control.SetValidator(PositiveIntegerValidator())
                 control.SetValue(self.table.GetValue(event.Row, event.Col))
-                control.SetFocus()
         else:
             event.Veto()
             name = self.slist[x][0]
@@ -166,13 +165,14 @@ class SettingsDialog(wx.Dialog):
         # store settings
         import terapy.core
         for x in settings:
-            setattr(terapy.core, x, self.slist[x][1])
+            tp = type(getattr(terapy.core,x))
+            setattr(terapy.core, x, tp(self.slist[x][1]))
         
         # propose to save to disk
-        from terapy.core import main_config_file, root_path
+        from terapy.core import main_config_file, config_path
         import os
         if main_config_file==None:
-            main_config_file = os.path.join(root_path,"terapy.ini")
+            main_config_file = os.path.join(config_path,"terapy.ini")
         if wx.MessageBox("Save to configuration file?", "Save settings", style=wx.YES | wx.NO) == wx.YES:
             self.SaveSettings(main_config_file)
         event.Skip()

@@ -18,30 +18,21 @@
 
 """
 
-   Simple storage class 
+    Wrapper for communication with serial ports.
 
 """
 
-class Storage():
-    def __init__(self):
-        self._taglist = []
+from serial.tools import list_ports
+from serial import Serial
 
-    def Save(self, data, tag):
-        if tag!="_taglist":
-            if not(hasattr(self,tag)):
-                self._taglist.append(tag)
-            setattr(self,tag,data)
+comports = []
+for x in list_ports.comports():
+    cp = Serial()
+    cp.port = x[0]
+    comports.append(cp)
 
-    def Read(self, tag):
-        if hasattr(self,tag) and tag!="_taglist":
-            return getattr(self,tag)
-        else:
-            return None
-    
-    def Remove(self, tag):
-        if hasattr(self,tag) and tag!="_taglist":
-            delattr(self, tag)
-            self._taglist.pop(self._taglist.index(tag))
-        
-    def GetTags(self):
-        return self._taglist
+def get_port(address):
+    for x in comports:
+        if x.port == address:
+            return x
+    return None

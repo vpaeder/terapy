@@ -64,3 +64,43 @@ class RunButton(wx.BitmapButton):
         self.state = state
         self.SetBitmapLabel(self.image[self.state])
         self.SetBackgroundColour(self.color[self.state])
+
+class OnOffIndicator(wx.Panel):
+    """
+    
+        Graphical boolean indicator
+      
+    """
+    def __init__(self, parent, label="text"):
+        """
+        
+            Initialization.
+        
+        """
+        wx.Panel.__init__(self,parent)
+        hbox = wx.BoxSizer(wx.HORIZONTAL)
+        
+        self.image = [wx.Image(icon_path + "toggle-off.png"),wx.Image(icon_path + "toggle-on.png")]
+        map(lambda x: x.ConvertAlphaToMask(128),self.image)
+        self.image = map(lambda x: x.ConvertToBitmap(), self.image)
+        self.state = True
+        self.indicator = wx.BitmapButton(self,style=wx.NO_BORDER, bitmap=self.image[self.state])
+        self.text = wx.StaticText(self,-1,label)
+        hbox.Add(self.indicator,0,wx.EXPAND|wx.ALL,2)
+        hbox.Add(self.text,0,wx.EXPAND|wx.ALL,2)
+        self.SetSizerAndFit(hbox)
+            
+    def Switch(self, state=True):
+        """
+        
+            Switch between on and off states
+            
+            Parameters:
+                state    -    state (bool)
+        
+        """
+        self.state = state
+        self.indicator.SetBitmapLabel(self.image[self.state])
+    
+    def SetLabel(self, text=""):
+        self.text.SetLabel(text)

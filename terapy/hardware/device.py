@@ -74,6 +74,14 @@ class Device():
         """
         pass
     
+    def disconnect(self):
+        """
+        
+            Disconnect device.
+        
+        """
+        pass
+    
     def detect(self):
         """
         
